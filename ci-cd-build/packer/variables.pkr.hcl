@@ -100,9 +100,9 @@ variable "vagrantfile_template" {
   default = ""
 }
 
-variable "version" {
+variable "box_version" {
   type = string
-  default = "0.1.0"
+  default = "0.1.1"
 }
 
 variable "guest_os_type" {

@@ -12,7 +12,7 @@ source "virtualbox-iso" "minio-vbox" {
   iso_checksum = "${var.iso_checksum_type}:${var.iso_checksum}"
   iso_urls     = [
         "${var.iso_path}/${var.iso_name}",
-        # var.iso_url
+        var.iso_url
       ]
 
   guest_os_type           = var.guest_os_type
@@ -86,8 +86,7 @@ build {
   post-processors {  
   
     post-processor "vagrant" {
-
-      output = "box/{{.Provider}}/${var.vm_name}-${var.version}.box"
+      output = "box/{{.Provider}}/${var.vm_name}-${var.box_version}.box"
       keep_input_artifact  = true
       provider_override    = "virtualbox"
       vagrantfile_template = var.vagrantfile_template
@@ -96,7 +95,11 @@ build {
     post-processor "vagrant-cloud" {
       access_token = "${var.vagrant_cloud_token}"
       box_tag      = "${var.vagrant_cloud_username}/${var.vm_name}"
-      version      = var.version
+      version      = var.box_version
+    }
+
+    post-processor "shell-local" {
+      inline = ["rm -rf output-${var.vm_name}-virtualbox-iso"]
     }
 
   }
