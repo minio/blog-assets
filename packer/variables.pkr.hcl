@@ -1,3 +1,8 @@
+variable "minio_version" {
+  type = string
+  default = "20221005145827.0.0"
+}
+
 variable "cpus" {
   type = number
   default = 2
@@ -77,6 +82,17 @@ variable "ssh_username" {
 variable "ssh_password" {
   type = string
   default = "vagrant"
+  sensitive = true
+}
+
+variable "minio_service_user" {
+  type = string
+  default = "minio-user"
+}
+
+variable "minio_service_group" {
+  type = string
+  default = "minio-user"
 }
 
 variable "vagrantfile_template" {
@@ -96,5 +112,15 @@ variable "guest_os_type" {
 
 variable "vm_name" {
   type = string
-  default = "ubuntu-20.04"
+  default = "minio-ubuntu-20-04"
+}
+
+variable "vagrant_cloud_token" {
+  type = string
+  sensitive = true
+}
+
+variable "vagrant_cloud_username" {
+  type = string
+  default = "minio"
 }

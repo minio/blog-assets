@@ -14,7 +14,7 @@ echo "==> Upgrading packages"
 apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
 
 apt-get -y install --no-install-recommends build-essential linux-headers-generic
-apt-get -y install --no-install-recommends ssh nfs-common curl git vim
+apt-get -y install --no-install-recommends ssh nfs-common curl git vim parted wget
 
 echo "==> Removing the release upgrader"
 apt-get -y purge ubuntu-release-upgrader-core

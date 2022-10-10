@@ -1,0 +1,74 @@
+# encoding: utf-8
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+MINIO_SERVER_COUNT  = 4
+MINIO_DRIVE_COUNT   = 4
+MINIO_CPU_COUNT     = 2
+MINIO_MEMORY_SIZE   = 4096 # MB
+MINIO_DRIVE_SIZE    = 2 # GB
+MINIO_ROOT_USER     = "minioadmin"
+MINIO_ROOT_PASSWORD = "minioadmin"
+
+BOX_IMAGE     = "ajjester/minio-ubuntu-20-04"
+BOX_VERSION   = "0.1.0"
+SUBNET_PREFIX = "192.168.60.1"
+NAME_PREFIX   = "minio-"
+
+Vagrant.configure(2) do |config|
+
+  (1..MINIO_SERVER_COUNT).each do |i_node|
+
+    config.vm.define (NAME_PREFIX + i_node.to_s) do |node|
+
+      node.vm.box         = BOX_IMAGE
+      node.vm.box_version = BOX_VERSION
+      node.vm.hostname    = NAME_PREFIX + i_node.to_s
+
+      node.vm.network :private_network, :ip => "#{SUBNET_PREFIX}#{i_node}"
+
+      drive_letter = "b"
+
+      (1..MINIO_DRIVE_COUNT).each do |i_drive|
+        node.vm.disk :disk, size: "#{MINIO_DRIVE_SIZE}GB", name: "data-#{i_drive}"
+
+        node.vm.provision "shell", inline: <<-SHELL
+          parted /dev/sd#{drive_letter} mklabel msdos
+          parted -a opt /dev/sd#{drive_letter} mkpart primary ext4 0% 100%
+        SHELL
+
+        node.vm.provision "shell", inline: <<-SHELL
+          mkfs.ext4 -L minio-data-#{i_drive} /dev/sd#{drive_letter}1
+
+          mkdir -p /mnt/minio/data-#{i_drive}
+          echo "LABEL=minio-data-#{i_drive} /mnt/minio/data-#{i_drive} ext4 defaults 0 2" >> /etc/fstab
+        SHELL
+
+        drive_letter.next!
+      end
+
+      node.vm.provision "shell", inline: <<-SHELL
+        mount -a
+        chown minio-user:minio-user /mnt/minio/data-*
+
+        echo "MINIO_VOLUMES=\"http://minio-{1...#{MINIO_SERVER_COUNT}}:9000/mnt/minio/data-{1...#{MINIO_DRIVE_COUNT}}\"" >> /etc/default/minio
+        echo "MINIO_OPTS=\"--console-address :9001\"" >> /etc/default/minio
+        echo "MINIO_ROOT_USER=\"#{MINIO_ROOT_USER}\"" >> /etc/default/minio
+        echo "MINIO_ROOT_PASSWORD=\"#{MINIO_ROOT_PASSWORD}\"" >> /etc/default/minio
+
+        systemctl enable minio.service
+      SHELL
+
+      node.vm.provider "virtualbox" do |vb|
+        vb.name   = NAME_PREFIX + i_node.to_s
+        vb.cpus   = MINIO_CPU_COUNT
+        vb.memory = MINIO_MEMORY_SIZE
+      end
+
+      node.vm.provision :hosts, :sync_hosts => true
+
+    end
+  
+  end
+
+end
