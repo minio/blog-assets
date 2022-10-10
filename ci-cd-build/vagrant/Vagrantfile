@@ -10,7 +10,7 @@ MINIO_DRIVE_SIZE    = 2 # GB
 MINIO_ROOT_USER     = "minioadmin"
 MINIO_ROOT_PASSWORD = "minioadmin"
 
-BOX_IMAGE     = "ajjester/minio-ubuntu-20-04"
+BOX_IMAGE     = "minioaj/minio-ubuntu-20-04"
 BOX_VERSION   = "0.1.0"
 SUBNET_PREFIX = "192.168.60.1"
 NAME_PREFIX   = "minio-"

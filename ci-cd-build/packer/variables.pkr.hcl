@@ -100,11 +100,6 @@ variable "vagrantfile_template" {
   default = ""
 }
 
-variable "version" {
-  type = string
-  default = "0.1.0"
-}
-
 variable "guest_os_type" {
   type = string
   default = "Ubuntu_64"
@@ -118,9 +113,15 @@ variable "vm_name" {
 variable "vagrant_cloud_token" {
   type = string
   sensitive = true
+  default = "abc123"
 }
 
 variable "vagrant_cloud_username" {
   type = string
   default = "minio"
+}
+
+variable "box_version" {
+  type = string
+  default = "0.1.0"
 }
