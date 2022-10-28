@@ -100,6 +100,11 @@ variable "vagrantfile_template" {
   default = ""
 }
 
+variable "box_version" {
+  type = string
+  default = "0.1.1"
+}
+
 variable "guest_os_type" {
   type = string
   default = "Ubuntu_64"
