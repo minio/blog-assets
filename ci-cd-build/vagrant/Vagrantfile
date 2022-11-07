@@ -71,4 +71,21 @@ Vagrant.configure(2) do |config|
   
   end
 
+  config.vm.define "influxdbiox" do |node|
+
+    node.vm.box         = "ubuntu/focal64"
+    node.vm.hostname    = "influxdbiox"
+
+    node.vm.network :private_network, :ip => "#{SUBNET_PREFIX}5"
+
+    node.vm.provider "virtualbox" do |vb|
+      vb.name   = "influxdbiox"
+      vb.cpus   = MINIO_CPU_COUNT
+      vb.memory = MINIO_MEMORY_SIZE
+    end
+
+    node.vm.provision :hosts, :sync_hosts => true
+
+  end
+
 end
