@@ -7,6 +7,13 @@ terraform {
       version = "~> 4.31.0"
     }
   }
+
+  backend "s3" {
+    bucket = "aj-terraform-bucket"
+    key    = "tf/aj/mo"
+    region = "us-east-1"
+  }
+
 }
 
 provider "aws" {
