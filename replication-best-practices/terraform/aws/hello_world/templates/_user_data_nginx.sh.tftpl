@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Variables from Terraform
+UNBOUND_IP=${unbound_ip}
+
+
+systemctl stop systemd-resolved
+systemctl disable systemd-resolved
+
+unlink /etc/resolv.conf
+
+cat > /etc/resolv.conf << RESOLV_CONF
+nameserver $${UNBOUND_IP}
+RESOLV_CONF
