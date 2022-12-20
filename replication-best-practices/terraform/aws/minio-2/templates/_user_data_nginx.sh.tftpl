@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# Variables from Terraform
+UNBOUND_IP=${unbound_ip}
+
+systemctl stop systemd-resolved
+systemctl disable systemd-resolved
+
+unlink /etc/resolv.conf
+
+cat > /etc/resolv.conf << RESOLV_CONF
+nameserver $${UNBOUND_IP}
+RESOLV_CONF
+
+apt-get -y install nginx
+
+unlink /etc/nginx/sites-enabled/default
+
+cat > /etc/nginx/conf.d/minio.conf << NGINX_CONF
+upstream minio_server {
+  server server-1.minio.local:9000;
+  server server-2.minio.local:9000;
+  server server-3.minio.local:9000;
+}
+
+server {
+    listen       80 default_server;
+
+    ignore_invalid_headers off;
+    client_max_body_size 0;
+    proxy_buffering off;
+    proxy_request_buffering off;
+
+    location / {
+        proxy_set_header Host \$http_host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+
+        proxy_connect_timeout 300;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        chunked_transfer_encoding off;
+
+        proxy_pass http://minio_server;
+    }
+}
+NGINX_CONF
+
+systemctl enable nginx
+systemctl restart nginx
+
+curl https://dl.min.io/client/mc/release/linux-amd64/mc \
+  --create-dirs \
+  -o /opt/minio-binaries/mc
+
+chmod +x /opt/minio-binaries/mc
