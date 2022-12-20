@@ -58,7 +58,7 @@ module "hello_minio_aws_instance_unbound" {
   minio_aws_instance_type          = var.hello_minio_aws_instance_type
   minio_aws_instance_key_name      = var.hello_minio_aws_instance_key_name
 
-  minio_aws_instance_user_data     = templatefile("${path.module}/templates/_user_data_unbound.sh.tftpl", {})
+  minio_aws_instance_user_data     = templatefile("../templates/_user_data_unbound.sh.tftpl", {})
 
 }
 
@@ -83,7 +83,7 @@ module "hello_minio_aws_instance_minio" {
   minio_aws_instance_type          = var.hello_minio_aws_instance_type
   minio_aws_instance_key_name      = var.hello_minio_aws_instance_key_name
 
-  minio_aws_instance_user_data     = templatefile("${path.module}/templates/_user_data_minio.sh.tftpl", {
+  minio_aws_instance_user_data     = templatefile("../templates/_user_data_minio.sh.tftpl", {
     minio_version = "20221207005637.0.0"
     unbound_ip = module.hello_minio_aws_instance_unbound.minio_aws_instance_private_ip
   })
@@ -143,7 +143,7 @@ module "hello_minio_aws_instance_nginx" {
   minio_aws_instance_type          = var.hello_minio_aws_instance_type
   minio_aws_instance_key_name      = var.hello_minio_aws_instance_key_name
 
-  minio_aws_instance_user_data     = templatefile("${path.module}/templates/_user_data_nginx.sh.tftpl", {
+  minio_aws_instance_user_data     = templatefile("../templates/_user_data_nginx.sh.tftpl", {
     unbound_ip = module.hello_minio_aws_instance_unbound.minio_aws_instance_private_ip
   })
 
