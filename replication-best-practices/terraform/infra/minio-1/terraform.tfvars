@@ -1,7 +1,7 @@
-hello_minio_aws_region  = "us-east-1"
+hello_minio_region  = "us-east-1"
 
-hello_minio_aws_vpc_cidr_block = "10.0.0.0/16"
-hello_minio_aws_vpc_cidr_newbits = 4
+hello_minio_cidr_block = "10.0.0.0/16"
+hello_minio_cidr_newbits = 4
 
 hello_minio_public_igw_cidr_blocks = {
   "us-east-1b" = 1
@@ -21,4 +21,4 @@ hello_minio_private_isolated_cidr_blocks = {
   "us-east-1f" = 9
 }
 
-hello_minio_aws_instance_key_name="aj_terraform"
+hello_minio_instance_key_name="aj_terraform"

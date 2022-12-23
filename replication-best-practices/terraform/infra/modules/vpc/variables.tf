@@ -1,10 +1,10 @@
-variable "minio_aws_vpc_cidr_block" {
+variable "minio_cidr_block" {
   description = "AWS VPC CIDR block"
   type        = string
   default     = "10.0.0.0/16"
 }
 
-variable "minio_aws_vpc_cidr_newbits" {
+variable "minio_cidr_newbits" {
   description = "AWS VPC CIDR new bits"
   type        = number
   default     = 4

@@ -1,6 +1,6 @@
 resource "aws_vpc" "minio_aws_vpc" {
 
-  cidr_block           = var.minio_aws_vpc_cidr_block
+  cidr_block           = var.minio_cidr_block
   instance_tenancy     = "default"
   enable_dns_hostnames = true
 
@@ -13,7 +13,7 @@ resource "aws_subnet" "minio_aws_subnet_public_igw" {
   for_each = var.minio_public_igw_cidr_blocks
 
   vpc_id            = aws_vpc.minio_aws_vpc.id
-  cidr_block        = cidrsubnet(aws_vpc.minio_aws_vpc.cidr_block, var.minio_aws_vpc_cidr_newbits, each.value)
+  cidr_block        = cidrsubnet(aws_vpc.minio_aws_vpc.cidr_block, var.minio_cidr_newbits, each.value)
   availability_zone = each.key
 
   map_public_ip_on_launch = true
@@ -52,7 +52,7 @@ resource "aws_subnet" "minio_aws_subnet_private_ngw" {
   for_each = var.minio_private_ngw_cidr_blocks
 
   vpc_id            = aws_vpc.minio_aws_vpc.id
-  cidr_block        = cidrsubnet(aws_vpc.minio_aws_vpc.cidr_block, var.minio_aws_vpc_cidr_newbits, each.value)
+  cidr_block        = cidrsubnet(aws_vpc.minio_aws_vpc.cidr_block, var.minio_cidr_newbits, each.value)
   availability_zone = each.key
 }
 
@@ -104,7 +104,7 @@ resource "aws_subnet" "minio_aws_subnet_private_isolated" {
   for_each = var.minio_private_isolated_cidr_blocks
 
   vpc_id            = aws_vpc.minio_aws_vpc.id
-  cidr_block        = cidrsubnet(aws_vpc.minio_aws_vpc.cidr_block, var.minio_aws_vpc_cidr_newbits, each.value)
+  cidr_block        = cidrsubnet(aws_vpc.minio_aws_vpc.cidr_block, var.minio_cidr_newbits, each.value)
   availability_zone = each.key
 }
 
