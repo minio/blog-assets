@@ -1,9 +1,9 @@
-variable "minio_aws_security_group_vpc_id" {
+variable "minio_security_group_vpc_id" {
   description = "MinIO AWS VPC ID"
   type        = string
 }
 
-variable "minio_aws_security_group_rules" {
+variable "minio_security_group_rules" {
   description = "MinIO VPC Security Group rules"
 
   type = list(object({

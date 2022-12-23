@@ -1,17 +1,17 @@
-variable "hello_minio_aws_region" {
+variable "hello_minio_region" {
   description = "Hello MinIO AWS region"
   type        = string
 }
 
 /* */
 
-variable "hello_minio_aws_vpc_cidr_block" {
+variable "hello_minio_cidr_block" {
   description = "Hello MinIO AWS VPC CIDR block"
   type        = string
   default     = "10.0.0.0/16"
 }
 
-variable "hello_minio_aws_vpc_cidr_newbits" {
+variable "hello_minio_cidr_newbits" {
   description = "Hello MinIO AWS VPC CIDR new bits"
   type        = number
   default     = 4
@@ -98,25 +98,25 @@ variable "hello_minio_vpc_security_group_rules" {
   ]
 }
 
-variable "hello_minio_aws_ami_filter_name_values" {
+variable "hello_minio_ami_filter_name_values" {
   description = "Hello World AWS AMI filter name:values"
   type        = list(string)
   default     = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"] 
 }
 
-variable "hello_minio_aws_ami_owners" {
+variable "hello_minio_ami_owners" {
   description = "Hello World AWS AMI owners"
   type        = list(string)
   default     = ["099720109477"] 
 }
 
-variable "hello_minio_aws_instance_type" {
+variable "hello_minio_instance_type" {
   description = "Hello World AWS Instance type"
   type        = string
   default     = "t2.micro"
 }
 
-variable "hello_minio_aws_instance_key_name" {
+variable "hello_minio_instance_key_name" {
   description = "Hello World AWS Instance Key Name"
   type        = string
 }
