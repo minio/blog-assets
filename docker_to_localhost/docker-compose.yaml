@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  minio:
+    image: minio/minio
+    command: server /data
+    ports:
+      - "9000:9000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - mynetwork
+
+  flaskapp:
+    image: python:3.9 # Use an official Python image
+    command: >
+      sh -c "pip install Flask
+      && FLASK_APP=main.py FLASK_RUN_HOST=0.0.0.0 flask run" # Install Flask and run the app
+    volumes:
+      - ./app:/app # Mount your Flask app directory
+    working_dir: /app # Set working directory to your app directory
+    ports:
+      - "5000:5000"
+    depends_on:
+      - minio
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
