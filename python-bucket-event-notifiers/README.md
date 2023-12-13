@@ -24,6 +24,6 @@ This guide provides an in-depth look into setting up and managing event notifica
 ## Assets & Resources
 - flask-app.dockerfile
 - docker-compose.yaml
-- docker-sdk-script.py
+- flask-app.py
 - minio-client-integration-notebook.ipynb
 - README.md
