@@ -8,6 +8,8 @@ services:
       - minio
       - postgres
       - redis
+    environment:
+      - FLASK_ENV=development
 
   minio:
     image: minio/minio
