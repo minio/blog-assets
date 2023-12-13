@@ -25,7 +25,7 @@ def deploy_service(service_config: ServiceConfig):
 # Service configurations
 flask_config = ServiceConfig(
     name="flaskapp",
-    docker_image="flaskapp_image",  # Replace with your Flask Docker image
+    docker_image="flaskapp_image.dockerfile",  # Replace with your Flask Docker image
     ports={'5000/tcp': 5000},
     environment={"FLASK_ENV": "development"}
 )
