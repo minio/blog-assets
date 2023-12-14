@@ -1,7 +1,9 @@
 version: '3.8'
 services:
-  flask-app:
-    build: .
+  flaskapp:
+    build:
+      context: .
+      dockerfile: flaskapp.dockerfile
     ports:
       - "5000:5000"
     depends_on:
@@ -9,7 +11,7 @@ services:
       - postgres
       - redis
     environment:
-      - FLASK_ENV=development
+      FLASK_ENV: development
 
   minio:
     image: minio/minio
