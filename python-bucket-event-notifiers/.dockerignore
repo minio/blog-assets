@@ -1,0 +1,4 @@
+# .dockerignore
+docker-compose.yaml
+docker_sdk_deploy_services.py
+README.md
