@@ -22,8 +22,9 @@ This guide provides an in-depth look into setting up and managing event notifica
 - **Extending Service Clients**: Guide to adding additional service client connectors.
 
 ## Assets & Resources
-- flask-app.dockerfile
+- flaskapp.dockerfile
 - docker-compose.yaml
-- flask-app.py
+- app.py
+- docker_sdk_deploy_services.py
 - minio-client-integration-notebook.ipynb
 - README.md
