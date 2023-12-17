@@ -48,7 +48,7 @@ redis_client = redis.Redis(
     host=RedisClientConfig.host, 
     port=RedisClientConfig.port)
 
-# This is where we start the Flask App and create API endpoints consisting of: @app.route (Route, RouteMethod)
+# This is where we start the Flask App and create API endpoints consisting of: @app.route ( TheRoute, TheRoutesMethod)
 app = Flask(__name__)
 
 @app.route('/event', methods=['POST'])
