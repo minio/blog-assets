@@ -1,28 +1,31 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, BaseSettings
 from dataclasses import dataclass
 from flask import Flask, request
-from minio import Minio
+from python-dotenv import load_dotenv
 import psycopg2
 import redis
+import os
 
-# Pydantic configuration class
-class MinioClientConfig(BaseModel):
-    endpoint: str = 'localhost:9000'
-    access_key: str = 'minio'
-    secret_key: str = 'minio123'
+load_dotenv()
 
-# Pydantic configuration class
-class PostgresClientConfig(BaseModel):
-    host: str = 'localhost'
-    port: int = 5432
-    user: str = 'user'
-    password: str = 'password'
-    database: str = 'postgres'
+# Pydantic configuration class with default values
+class MinioClientConfig(BaseSettings):
+    endpoint: str = os.getenv('MINIO_ENDPOINT', 'localhost:9000') # Defaults to demo container hostname
+    access_key: str = os.getenv('MINIO_ACCESS_KEY', 'minio')
+    secret_key: str = os.getenv('MINIO_SECRET_KEY', 'minio123')
 
-# Pydantic configuration class
-class RedisClientConfig(BaseModel):
-    host: str = 'localhost'
-    port: int = 6379
+# Pydantic configuration class with default values
+class PostgresClientConfig(BaseSettings):
+    host: str = os.getenv('POSTGRES_HOST', 'postgres') # Defaults to demo container hostname
+    port: int = os.getenv('POSTGRES_PORT', 5432)
+    user: str = os.getenv('POSTGRES_USER', 'myuser')
+    password: str = os.getenv('POSTGRES_PASSWORD', 'mypassword') 
+    database: str = os.getenv('POSTGRES_DB', 'postgres')
+
+# Pydantic configuration class with default values
+class RedisClientConfig(BaseSettings):
+    host: str = os.getenv('REDIS_HOST', 'redis') # Defaults to demo container hostname
+    port: int = os.getenv('REDIS_PORT', 6379)
 
 # Dataclass for event
 @dataclass
@@ -86,4 +89,4 @@ simulated_event = Event(**simulated_event_data)
 process_event(simulated_event)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
