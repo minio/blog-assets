@@ -4,7 +4,6 @@ from flask import Flask, jsonify, request
 from minio import Minio
 from pydantic import BaseModel, ValidationError
 
-
 # Pydantic configuration class for MinIO client
 class MinioClientConfig(BaseModel):
     endpoint: str
@@ -13,15 +12,12 @@ class MinioClientConfig(BaseModel):
     secure: bool = False
 
 # Pydantic configuration class for PostgreSQL client
-
-
 class PostgresClientConfig(BaseModel):
     host: str
     port: int
     user: str
     password: str
     database: str
-
 
 # Initialize configuration instances
 minio_config = MinioClientConfig(
@@ -56,9 +52,6 @@ pg_conn = psycopg2.connect(
 
 # Flask app initialization
 app = Flask(__name__)
-
-# Route for handling MinIO events without Py
-
 
 @app.route('/minio-event', methods=['POST'])
 def handle_minio_event():
