@@ -2,56 +2,26 @@ import json
 import psycopg2
 from flask import Flask, jsonify, request
 from minio import Minio
-from pydantic import BaseModel, ValidationError
 
-# Pydantic configuration class for MinIO client
-class MinioClientConfig(BaseModel):
-    endpoint: str
-    access_key: str
-    secret_key: str
-    secure: bool = False
-
-# Pydantic configuration class for PostgreSQL client
-class PostgresClientConfig(BaseModel):
-    host: str
-    port: int
-    user: str
-    password: str
-    database: str
-
-# Initialize configuration instances
-minio_config = MinioClientConfig(
+# Initialize MinIO and PostgreSQL clients
+minio_client = Minio(
     endpoint='minio:9000',
     access_key='minio',
-    secret_key='minio123'
+    secret_key='minio123',
+    secure=True
 )
 
-postgres_config = PostgresClientConfig(
+pg_conn = psycopg2.connect(
     host='postgres',
     port=5432,
     user='myuser',
     password='mypassword',
-    database='postgres'
-)
-
-# Initialize MinIO and PostgreSQL clients
-minio_client = Minio(
-    minio_config.endpoint,
-    access_key=minio_config.access_key,
-    secret_key=minio_config.secret_key,
-    secure=minio_config.secure
-)
-
-pg_conn = psycopg2.connect(
-    host=postgres_config.host,
-    port=postgres_config.port,
-    user=postgres_config.user,
-    password=postgres_config.password,
-    dbname=postgres_config.database
+    dbname='postgres'
 )
 
 # Flask app initialization
 app = Flask(__name__)
+
 
 @app.route('/minio-event', methods=['POST'])
 def handle_minio_event():
