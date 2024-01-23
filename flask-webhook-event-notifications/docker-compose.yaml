@@ -8,16 +8,17 @@ services:
       - "35000:5000"
     depends_on:
       - minio
-      - postgres
     environment:
       FLASK_ENV: development
+    volumes:
+      - ./app:/app  # Bind mount the FlaskApp directory
 
   minio:
     container_name: minio
     image: minio/minio
     environment:
-      MINIO_ACCESS_KEY: minio
-      MINIO_SECRET_KEY: minio123
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
     command: server /data --console-address ":9001"
     ports:
       - "39000:9000"
@@ -25,22 +26,5 @@ services:
     volumes:
       - minio_data:/data
 
-  postgres:
-    container_name: postgres
-    image: postgres:alpine
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  busybox:
-    image: nginx:alpine
-    working_dir: /
-
 volumes:
   minio_data:
-  postgres_data:
