@@ -4,6 +4,7 @@ for PUT events in a MinIO bucket. Apache Tika is used to extract the text from t
 """
 from flask import Flask, request, abort, make_response
 import io
+import logging
 from tika import parser
 from minio import Minio
 
@@ -22,6 +23,8 @@ client = Minio(
     access_key=MINIO_ACCESS_KEY,
     secret_key=MINIO_SECRET_KEY,
 )
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -42,7 +45,7 @@ async def text_extraction_webhook():
         parsed_file = parser.from_buffer(file_like.read(), serverEndpoint=TIKA_SERVER_URL)
         text = parsed_file["content"]
         metadata = parsed_file["metadata"]
-        print(text)
+        logger.info(text)
         result = {
             "text": text, 
             "metadata": metadata
