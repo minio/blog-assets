@@ -1,5 +1,3 @@
-# generate_and_upload_to_minio.py
-
 from faker import Faker
 import pandas as pd
 import pyarrow as pa
