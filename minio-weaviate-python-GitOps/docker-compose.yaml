@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+ minio:
+   container_name: minio_server
+   build:
+     context: ./minio
+   image: cdaprod/minio-server
+   volumes:
+     - ./minio/data:/data
+   ports:
+     - "9000:9000"
+     - "9001:9001"
+   command: server /data --console-address ":9001"
+
+ weaviate:
+   container_name: weaviate_server
+   image: semitechnologies/weaviate:latest
+   ports:
+     - "8080:8080"
+   environment:
+     AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+     PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+     QUERY_DEFAULTS_LIMIT: 25
+     DEFAULT_VECTORIZER_MODULE: 'none'
+     ENABLE_MODULES: 'backup-s3, text2vec-cohere,text2vec-huggingface,text2vec-palm,text2vec-openai,generative-openai,generative-cohere,generative-palm,ref2vec-centroid,reranker-cohere,qna-openai'
+     BACKUP_S3_BUCKET: 'weaviate-backups'
+     BACKUP_S3_ENDPOINT: 'minio:9000'
+     BACKUP_S3_ACCESS_KEY_ID: 'minio'
+     BACKUP_S3_SECRET_ACCESS_KEY: 'minio123'
+     BACKUP_S3_USE_SSL: 'false'
+     CLUSTER_HOSTNAME: 'node1'
+   volumes:
+     - ./weaviate/data:/var/lib/weaviate
+   depends_on:
+     - minio
+
+ python-app:
+    container_name: python-app
+    build: ./app
+    image: cdaprod/python-weaviate-initializer-app
+    volumes:
+      - ./app/data:/app/data
+    depends_on:
+      - weaviate
+      - minio
