@@ -8,8 +8,7 @@ from unstructured.partition.auto import partition
 import io
 
 # Setup for MinIO and Weaviate
-minio_client = Minio("192.168.0.25:9000", access_key="cda_cdaprod", secret_key="cda_cdaprod", secure=False)
-# minio_client = Minio("play.min.io:443", access_key="minioadmin", secret_key="minioadmin", secure=True)
+minio_client = Minio("play.min.io:443", access_key="minioadmin", secret_key="minioadmin", secure=True)
 print("MinIO client initialized.")
 
 client = weaviate.Client("http://192.168.0.25:8080")
