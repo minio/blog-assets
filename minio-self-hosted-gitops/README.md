@@ -4,10 +4,13 @@ This directory contains all the necessary configurations, scripts, and documenta
 
 Directory Contents:
 
-	•	docker-compose.yml: The Docker Compose file used for deploying MinIO as part of a Docker Swarm stack. It is adapted from our previous exploration titled “MinIO Weaviate Python GitOps” and tailored for self-hosted scenarios.
-	•	deploy-minio-on-rpi-swarm.yml: This YAML file defines the GitHub Actions workflow responsible for automating the deployment process of MinIO onto a Raspberry Pi (RPI) Docker Swarm cluster. It includes steps for checking out code, loading the Docker Compose configuration, deploying the MinIO stack, and verifying the deployment.
-	•	github-runner.service: A Systemd service file template to help you set up a GitHub Actions runner as a persistent service on your Docker Swarm leader node. This ensures that your CI/CD pipelines run reliably.
-	•	README.md: The file you’re currently reading, providing an overview of the directory contents and guidance on how to use them.
+• docker-compose.yml: The Docker Compose file used for deploying MinIO as part of a Docker Swarm stack. It is adapted from our previous exploration titled “MinIO Weaviate Python GitOps” and tailored for self-hosted scenarios.
+ 
+• deploy-minio-on-rpi-swarm.yml: This YAML file defines the GitHub Actions workflow responsible for automating the deployment process of MinIO onto a Raspberry Pi (RPI) Docker Swarm cluster. It includes steps for checking out code, loading the Docker Compose configuration, deploying the MinIO stack, and verifying the deployment.
+ 
+• github-runner.service: A Systemd service file template to help you set up a GitHub Actions runner as a persistent service on your Docker Swarm leader node. This ensures that your CI/CD pipelines run reliably.
+ 
+• README.md: The file you’re currently reading, providing an overview of the directory contents and guidance on how to use them.
 
 Getting Started:
 
@@ -30,5 +33,3 @@ Support and Contributions:
 For more in-depth discussions, questions, or collaboration proposals, reach out to us on the [MinIO Slack channel](https://minio.slack.com).
 
 Together, let’s enhance the way we deploy and manage MinIO in self-hosted environments, leveraging the power of automation and GitOps practices.
-
-Thank you for exploring the MinIO Self-Hosted Deployment Assets. We’re excited to see how you implement and benefit from these resources in your projects.
