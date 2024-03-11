@@ -1,0 +1,31 @@
+name: Deploy MinIO on RPI Swarm
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  deploy-minio:
+    name: Deploy MinIO to RPI Swarm
+    runs-on: [self-hosted, rpi-swarm]
+
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v2
+
+    - name: Load Docker Compose File
+      run: |
+        echo "Loading Docker Compose for MinIO Deployment..."
+        docker-compose -f docker-compose.yml config
+
+    - name: Deploy MinIO Stack
+      run: |
+        echo "Deploying MinIO on RPI Swarm..."
+        docker stack deploy -c docker-compose.yml minio_stack
+
+    - name: Verify Deployment
+      run: |
+        echo "Verifying MinIO Deployment..."
+        docker service ls | grep minio_stack
