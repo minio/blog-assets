@@ -1,3 +1,5 @@
+# original langchain weaviate-rag from https://github.com/langchain-ai/langchain/blob/f2579096993ae460516a0aae1d3e09f3eb5c1772/templates/rag-weaviate/rag_weaviate/chain.py
+
 import os
 from langchain_community.chat_models import ChatOpenAI
 from langchain_community.document_loaders import WebBaseLoader
