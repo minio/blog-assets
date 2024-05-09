@@ -3,8 +3,8 @@ import os
 from time import time
 from typing import List, Dict, Any, Tuple
 
-#import mlrun
-#import mlrun.frameworks.pytorch as mlrun_torch
+import mlrun
+import mlrun.frameworks.pytorch as mlrun_torch
 import torch
 from torch import nn
 from torch.utils.data.dataloader import DataLoader
@@ -44,9 +44,8 @@ def epoch_loop(model: nn.Module, loader: DataLoader, params: Dict[str, Any]) -> 
         print("Epoch {} - Training loss: {}".format(epoch+1, total_loss/len(loader)))
 
         
-#@mlrun.handler()
-# context: mlrun.MLClientCtx, 
-def train_model(loader_type: str='memory', data_bucket: str=None, training_parameters: Dict=None):
+@mlrun.handler()
+def train_model(context: mlrun.MLClientCtx, loader_type: str='memory', data_bucket: str=None, training_parameters: Dict=None):
     logger = du.create_logger()
     logger.info(loader_type)
     logger.info(data_bucket)
@@ -63,28 +62,28 @@ def train_model(loader_type: str='memory', data_bucket: str=None, training_param
     # Train the model and log training metrics.
     logger.info('Creating the model.')    
     model = tu.MNISTModel(training_parameters['input_size'], training_parameters['hidden_sizes'], training_parameters['output_size'])
-    #loss_func = nn.NLLLoss()
-    #optimizer = optim.SGD(model.parameters(), lr=training_parameters['lr'], momentum=training_parameters['momentum'])
+    loss_func = nn.NLLLoss()
+    optimizer = optim.SGD(model.parameters(), lr=training_parameters['lr'], momentum=training_parameters['momentum'])
 
     # Train the model.
-    #logger.info('Training the model.')    
-    #mlrun_torch.train(
-    #    model=model,
-    #    training_set=train_loader,
-    #    loss_function=loss_func,
-    #    optimizer=optimizer,
-    #    validation_set=test_loader,
+    logger.info('Training the model.')    
+    mlrun_torch.train(
+        model=model,
+        training_set=train_loader,
+        loss_function=loss_func,
+        optimizer=optimizer,
+        validation_set=test_loader,
         #metric_functions=[accuracy],
-    #    epochs=training_parameters['epochs'],
-    #    custom_objects_map={"torch_utilities.py": "MNISTModel"},
-    #    custom_objects_directory=os.getcwd(),
-    #    context=context,
-    #)
+        epochs=training_parameters['epochs'],
+        custom_objects_map={"torch_utilities.py": "MNISTModel"},
+        custom_objects_directory=os.getcwd(),
+        context=context,
+    )
 
-    start_time = time()
-    epoch_loop(model, train_loader, training_parameters)
-    training_time_sec = (time()-start_time)
-    print('\nTraining Time (in seconds) =', training_time_sec)
+    #start_time = time()
+    #epoch_loop(model, train_loader, training_parameters)
+    #training_time_sec = (time()-start_time)
+    #print('\nTraining Time (in seconds) =', training_time_sec)
 
     # Test the model and log the accuracy as a metric.
     testing_metrics = tu.test_model_local(model, test_loader, training_parameters['device'])
