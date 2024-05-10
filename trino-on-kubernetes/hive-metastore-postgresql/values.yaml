@@ -1,0 +1,7 @@
+global:
+  postgresql:
+    auth:
+      postgresPassword: admin
+      database: metastore_db
+      username: admin
+      password: admin

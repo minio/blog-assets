@@ -1,0 +1,19 @@
+conf:
+  hiveSite:
+    hive.metastore.uris: thrift://my-hive-metastore:9083
+    javax.jdo.option.ConnectionDriverName: org.postgresql.Driver
+    javax.jdo.option.ConnectionURL: jdbc:postgresql://hive-metastore-postgresql:5432/metastore_db
+    javax.jdo.option.ConnectionUserName: admin
+    javax.jdo.option.ConnectionPassword: admin
+
+    fs.defaultFS: s3a://my-minio:9000
+    fs.s3a.connection.ssl.enabled: false
+    fs.s3a.impl: org.apache.hadoop.fs.s3a.S3AFileSystem
+    fs.s3a.endpoint: http://my-minio:9000
+    fs.s3a.access.key: minio_access_key
+    fs.s3a.secret.key: minio_secret_key
+    fs.s3a.path.style.access: true
+
+hiveMetastoreDb:
+  host: hive-metastore-postgresql
+  port: 5432
