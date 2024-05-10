@@ -1,0 +1,14 @@
+{
+    "tableName": "test",
+    "schemaName": "default",
+    "value": {
+        "dataFormat": "json",
+        "fields": [
+            {
+                "name": "number",
+                "mapping": "number",
+                "type": "INT"
+            }
+        ]
+    }
+}

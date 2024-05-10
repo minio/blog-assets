@@ -1,0 +1,15 @@
+apiVersion: v2
+appVersion: 3.1.2
+description:
+  The Apache Hive™ data warehouse software facilitates reading, writing, and managing large datasets
+  residing in distributed storage using SQL. Structure can be projected onto data already in storage. A command
+  line tool and JDBC driver are provided to connect users to Hive.
+home: https://hive.apache.org/
+icon: https://hive.apache.org/images/hive_logo_medium.jpg
+
+name: hive-metastore
+sources:
+  - https://github.com/apache/hive
+  - https://github.com/gradiant/charts
+  - https://github.com/realtimedatalake/hive-metastore-docker
+version: 0.0.1
