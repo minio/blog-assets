@@ -53,12 +53,12 @@ def bytes_to_image(image_bytes) -> PIL.Image.Image:
     return image
 
 
-def get_train_test_data(smoke_test_size: float=0) -> Tuple[Any]:
+def get_train_test_data(bucket_name: str, smoke_test_size: float=0) -> Tuple[Any]:
     logger = create_logger()
     logger.info(f'get_train_test_data called. smoke_test_size: {smoke_test_size}')
 
     # Get a list of objects and split them according to train and test.    
-    object_list = get_object_list('mnist')
+    object_list = get_object_list(bucket_name)
     X_train, y_train, X_test, y_test = split_train_test(object_list)
 
     if smoke_test_size > 0:
@@ -90,6 +90,9 @@ def image_to_byte_stream(image: PIL.Image.Image) -> io.BytesIO:
 
 
 def get_bucket_list() -> List[str]:
+    '''
+    Returns a list of buckets in MinIO.
+    '''
     logger = logging.getLogger('mnist_logger')
     logger.setLevel(logging.INFO)
 

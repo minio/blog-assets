@@ -49,11 +49,12 @@ class MNISTModel(nn.Module):
         out = F.relu(self.lin3(out))
         out = F.relu(self.lin4(out))
         out = F.log_softmax(self.lin5(out), dim=1)
-        if not self.training:
-            ps = torch.exp(out)
-            return torch.argmax(ps, dim=1)
-        else:
-            return out
+        return out
+        #if not self.training:
+        #    ps = torch.exp(out)
+        #    return torch.argmax(ps, dim=1)
+        #else:
+        #    return out
 
 
 def test_model_local(model: nn.Module, loader: DataLoader, device='cpu') -> Dict[str, Any]:
@@ -139,12 +140,12 @@ class ImageDataset(Dataset):
         return img, self.y[idx]
 
 
-def create_minio_data_loaders(batch_size:int, smoke_test_size: float=-1) -> Tuple[Any]:
+def create_minio_data_loaders(bucket_name: str, batch_size:int, smoke_test_size: float=-1) -> Tuple[Any]:
     # Start of load time.
     start_time = time()
 
     # Get a list of objects and split them according to train and test.    
-    X_train, y_train, X_test, y_test = du.get_train_test_data(smoke_test_size)
+    X_train, y_train, X_test, y_test = du.get_train_test_data(bucket_name, smoke_test_size)
 
     if smoke_test_size > 0:
         train_size = int(smoke_test_size*len(X_train))
@@ -156,7 +157,9 @@ def create_minio_data_loaders(batch_size:int, smoke_test_size: float=-1) -> Tupl
 
     # Define a transform to normalize the data
     transform = transforms.Compose([transforms.ToTensor(),
-                                    transforms.Normalize((0.5,), (0.5,))])
+                                    transforms.Normalize((0.5,), (0.5,)),
+                                    torch.flatten
+                                   ])
 
     train_dataset = ImageDataset(X_train, y_train, transform=transform)
     test_dataset = ImageDataset(X_test, y_test, transform=transform)
@@ -173,7 +176,8 @@ def create_memory_data_loaders(batch_size: int) -> Tuple[Any]:
 
     # Define a transform to normalize the data
     transform = transforms.Compose([transforms.ToTensor(),
-                                transforms.Normalize((0.5,), (0.5,)),
+                                    transforms.Normalize((0.5,), (0.5,)),
+                                    torch.flatten
                                 ])
 
     # Download and load the training data
