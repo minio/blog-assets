@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "hiveMetastore.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "hiveMetastore.name" . }}
+    app.kubernetes.io/component: metastore
+    {{- include "hiveMetastore.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "hiveMetastore.name" . }}
+      app.kubernetes.io/component: metastore
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  serviceName: {{ include "hiveMetastore.fullname" . }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "hiveMetastore.name" . }}
+        app.kubernetes.io/component: metastore
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    spec:
+      {{- if .Values.waitDb.enabled }}
+      initContainers:
+        - name: init-wait-db
+          image: "{{ .Values.waitDb.image.repository }}:{{ .Values.waitDb.image.tag }}"
+          imagePullPolicy: {{ .Values.waitDb.image.pullPolicy | quote }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              until nc -z -v -w90 {{ .Values.hiveMetastoreDb.host }} {{ .Values.hiveMetastoreDb.port }}; do
+                echo "Waiting for Hive Metastore DB to be ready..."
+                sleep 5
+              done
+          {{- if .Values.extraEnvVars }}
+          env:
+            {{- toYaml .Values.extraEnvVars | nindent 12 }}
+          {{- end }}
+      {{- end}}
+      containers:
+      - name: metastore
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+        resources:
+          {{- toYaml .Values.resources | indent 10 }}
+        command:
+          - bash
+          - entrypoint/entrypoint.sh
+        {{- if .Values.extraEnvVars }}
+        env:
+          {{- toYaml .Values.extraEnvVars | nindent 10 }}
+        {{- end }}
+        # readinessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 16010
+        #   initialDelaySeconds: 5
+        #   timeoutSeconds: 2
+        # livenessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 16010
+        #   initialDelaySeconds: 10
+        #   timeoutSeconds: 2
+        ports:
+        - containerPort: 9083
+          name: thrift
+        volumeMounts:
+        - name: hive-config
+          mountPath: /opt/apache-hive-metastore-3.1.2-bin/conf
+        - name: entrypoint
+          mountPath: /opt/entrypoint
+      volumes:
+      - name: hive-config
+        configMap:
+          name: {{ include "hiveMetastore.fullname" . }}
+      - name: entrypoint
+        configMap:
+          name: {{ include "hiveMetastore.fullname" . }}-entrypoint

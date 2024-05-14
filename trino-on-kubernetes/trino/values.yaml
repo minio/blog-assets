@@ -1,0 +1,22 @@
+image:
+  tag: 372
+
+additionalCatalogs:
+  minio: |
+    connector.name=hive-hadoop2
+    hive.metastore.uri=thrift://my-hive-metastore:9083
+    hive.s3.path-style-access=true
+    hive.s3.endpoint=http://my-minio:9000
+    hive.s3.aws-access-key=minio_access_key
+    hive.s3.aws-secret-key=minio_secret_key
+    hive.non-managed-table-writes-enabled=true
+    hive.s3select-pushdown.enabled=true
+    hive.storage-format=ORC
+    hive.allow-drop-table=true
+    hive.s3.ssl.enabled=false
+
+
+secretMounts:
+  - name: redis-table-schema-volumn
+    path: /etc/redis
+    secretName: redis-table-definition

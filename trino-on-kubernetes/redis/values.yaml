@@ -1,0 +1,3 @@
+global:
+  redis:
+    password: trino_demo_password
