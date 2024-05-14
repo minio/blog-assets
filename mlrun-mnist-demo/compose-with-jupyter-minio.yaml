@@ -65,9 +65,18 @@ services:
     ports:
       - "8080:8080"
     environment:
-      MLRUN_ARTIFACT_PATH: "${SHARED_DIR}/{{project}}"
+      S3_ENDPOINT_URL: "minio:9000"
+      AWS_ACCESS_KEY_ID: "lwycuW6S5f7yJZt65tRK"
+      AWS_SECRET_ACCESS_KEY: "d6hXquiXGpbmfR8OdX7Byd716hmhN87xTyCX8S0K"
+      MLRUN_STORAGE__AUTO_MOUNT_TYPE: s3
+      MLRUN_STORAGE__AUTO_MOUNT_PARAMS: "aws_access_key=lwycuW6S5f7yJZt65tRK,aws_secret_key=d6hXquiXGpbmfR8OdX7Byd716hmhN87xTyCX8S0K,endpoint_url=minio:9000"
+      MLRUN_HTTPDB__REAL_PATH: s3://
+      MLRUN_ARTIFACT_PATH: s3://mlrun/projects/{{ `{{run.project}}` }}/artifacts
+      MLRUN_FEATURE_STORE__DATA_PREFIXES__DEFAULT: s3://mlrun/projects/{project}/FeatureStore/{name}/{kind}
+
+      #MLRUN_ARTIFACT_PATH: "${SHARED_DIR}/{{project}}"
       # using local storage, meaning files / artifacts are stored locally, so we want to allow access to them
-      MLRUN_HTTPDB__REAL_PATH: /data
+      #MLRUN_HTTPDB__REAL_PATH: /data
       MLRUN_HTTPDB__DATA_VOLUME: "${SHARED_DIR}"
       MLRUN_LOG_LEVEL: DEBUG
       MLRUN_NUCLIO_DASHBOARD_URL: http://nuclio:8070
