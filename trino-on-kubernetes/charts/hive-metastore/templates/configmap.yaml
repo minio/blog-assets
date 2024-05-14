@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hiveMetastore.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "hiveMetastore.name" . }}
+    {{- include "hiveMetastore.labels" . | nindent 4 }}
+data:
+  metastore-site.xml: |-
+    <configuration>
+        <property>
+          <name>metastore.task.threads.always</name>
+          <value>org.apache.hadoop.hive.metastore.events.EventCleanerTask</value>
+        </property>
+        <property>
+          <name>metastore.expression.proxy</name>
+          <value>org.apache.hadoop.hive.metastore.DefaultPartitionExpressionProxy</value>
+        </property>
+        <property>
+          <name>metastore.storage.schema.reader.impl</name>
+          <value>org.apache.hadoop.hive.metastore.SerDeStorageSchemaReader</value>
+        </property>
+      {{- if index .Values.conf "hiveSite" }}
+      {{- range $key, $value := index .Values.conf "hiveSite" }}
+      <property><name>{{ $key }}</name><value>{{ $value }}</value></property>
+      {{- end }}
+      {{- end }}
+    </configuration>
