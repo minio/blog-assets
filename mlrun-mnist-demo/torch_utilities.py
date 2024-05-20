@@ -136,7 +136,7 @@ class ImageDataset(Dataset):
         img = du.get_image_from_minio('mnist', self.X[idx])
         if self.transform is not None:
             img = self.transform(img)
-        img = img.view(1, 784)
+        #img = img.view(1, 784)
         return img, self.y[idx]
 
 
