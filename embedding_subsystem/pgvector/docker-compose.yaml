@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  pgvector:
+    hostname: db
+    image: ankane/pgvector
+    container_name: pgvector
+    ports:
+     - 5432:5432
+    restart: always
+    environment:
+      POSTGRES_DB: vectordb
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpwd
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pg-data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
+      PGADMIN_DEFAULT_PASSWORD: strong-password
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio
+    ports:
+      - 9000:9000
+      - 9001:9001
+    environment:
+      MINIO_ROOT_USER: 'minio_user'
+      MINIO_ROOT_PASSWORD: 'minio_password'
+      MINIO_ADDRESS: ':9000'
+      MINIO_STORAGE_USE_HTTPS: False
+      MINIO_CONSOLE_ADDRESS: ':9001'
+    command: minio server /data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    volumes:
+      - ~/minio-data:/data
+
+volumes:
+  pg-data:
+  pgadmin-data:

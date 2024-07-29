@@ -1,0 +1,10 @@
+huggingface-hub
+ipykernel
+ipywidgets
+langchain
+minio
+psycopg2-binary
+python-dotenv
+ray[train,data]
+sentence_transformers
+virtualenv
