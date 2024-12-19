@@ -1,0 +1,8 @@
+minio
+numpy
+pandas
+pillow
+python-dotenv
+s3torchconnector
+torch --index-url https://download.pytorch.org/whl/cu124
+torchvision --index-url https://download.pytorch.org/whl/cu124
