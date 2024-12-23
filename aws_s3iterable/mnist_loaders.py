@@ -183,14 +183,14 @@ def create_mnist_loader(bucket_name: str, split: str, loader_type:str, batch_siz
         uri = f's3://{bucket_name}/{split}'
         aws_region = os.environ['AWS_REGION']
         dataset = S3MapDataset.from_prefix(uri, region=aws_region, transform=S3MapTransform(transform))
-        loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
         return loader, (time.perf_counter()-start_time)    
 
     if loader_type == 's3iter':
         uri = f's3://{bucket_name}/{split}'
         aws_region = os.environ['AWS_REGION']
         dataset = S3IterableDataset.from_prefix(uri, region=aws_region, enable_sharding=True, transform=S3IterTransform(transform))
-        loader = DataLoader(dataset, batch_size=batch_size)
+        loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers)
         return loader, (time.perf_counter()-start_time)    
 
     elif loader_type == 'itertar':
@@ -228,11 +228,11 @@ def create_mnist_loader(bucket_name: str, split: str, loader_type:str, batch_siz
         dataset = MNISTMap(bucket_name, X, y, transform=transform)
     elif loader_type == 'iter':
         dataset = MNISTIterableDataset(bucket_name, X, y, transform=IterTransform(transform, bucket_name))
-        loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+        loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     else:
         raise ValueError('loader_type must be either file, list, full, map or s3map.')
 
     if loader == None:
-        loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+        loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
 
     return loader, (time.perf_counter()-start_time)    

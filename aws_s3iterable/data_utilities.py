@@ -244,12 +244,12 @@ def image_to_byte_stream(image: PIL.Image.Image) -> BytesIO:
 
 
 def get_minio_credentials() -> Tuple[str]:
-    url = os.environ['MINIO_URL']
+    endpoint = os.environ['MINIO_ENDPOINT']
     access_key = os.environ['MINIO_ACCESS_KEY']
     secret_key = os.environ['MINIO_SECRET_KEY']
     if os.environ['MINIO_SECURE']=='true': secure = True 
     else: secure = False 
-    return (url, access_key, secret_key, secure)
+    return (endpoint, access_key, secret_key, secure)
 
 
 def get_bucket_list() -> List[str]:
