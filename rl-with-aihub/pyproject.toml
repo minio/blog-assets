@@ -1,0 +1,13 @@
+[project]
+name = "rl-with-aihub"
+version = "0.1.0"
+description = "Deepseek-style Reinforcement Learning Against Object Store"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "datasets>=3.3.2",
+    "torch>=2.6.0",
+    "transformers>=4.49.0",
+    "trl>=0.15.2",
+    "vllm>=0.7.3"
+]
