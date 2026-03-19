@@ -1,0 +1,69 @@
+# AIStor Tables + Dremio Integration
+# Single MinIO node with Dremio Enterprise and Jupyter
+
+services:
+  minio:
+    image: ${MINIO_TEST_IMAGE}
+    pull_policy: if_not_present
+    hostname: minio
+    command: server --console-address ":9001" /data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_LICENSE: ${MINIO_LICENSE}
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - minio_data:/data
+    networks:
+      - dremio_aistor
+
+  dremio:
+    image: ${DREMIO_IMAGE:-quay.io/dremio/dremio-enterprise:26.1.4}
+    platform: linux/amd64
+    depends_on:
+      minio:
+        condition: service_healthy
+    ports:
+      - "9047:9047"
+      - "31010:31010"
+      - "32010:32010"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf -o /dev/null -w '%{http_code}' http://localhost:9047 | grep -qE '(200|302|403)'"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - dremio_data:/opt/dremio/data
+    networks:
+      - dremio_aistor
+
+  jupyter:
+    image: quay.io/jupyter/pyspark-notebook:2024-10-14
+    depends_on:
+      minio:
+        condition: service_healthy
+    command: start-notebook.sh --NotebookApp.token=''
+    environment:
+      MINIO_HOST: http://minio:9000
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/notebooks
+    networks:
+      - dremio_aistor
+
+networks:
+  dremio_aistor:
+
+volumes:
+  minio_data:
+  dremio_data:
