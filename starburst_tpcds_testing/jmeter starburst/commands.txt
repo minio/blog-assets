@@ -1,0 +1,6 @@
+helm upgrade --install sep \
+  oci://harbor.starburstdata.net/starburstdata/charts/starburst-enterprise \
+  --version 479.1.0 \
+  -f sep-test.yaml
+kubectl delete pod coordinator-6b5b457888-9lt9b --grace-period=0 --force
+
