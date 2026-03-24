@@ -1,0 +1,13 @@
+# Add the required Python packages for the project
+# Example: numpy==1.21.0
+# Add other dependencies as needed
+numpy
+pandas
+matplotlib
+scipy
+jupyter
+python-dotenv
+boto3
+pyarrow
+termcolor
+pyspark
