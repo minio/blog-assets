@@ -1,0 +1,17 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
+1774416978524,319,USE SCHEMA  aistor.tpcds_sf3000_part,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,318,0,175
+1774416978844,1094,Optimize catalog_returns,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,1094,0,0
+1774416979938,200029,Optimize catalog_sales,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,200029,0,0
+1774417179967,16714,Optimize inventory,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,16714,0,0
+1774417196682,30891,Optimize store_returns,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,30890,0,0
+1774417227573,62688,Optimize store_sales,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,62688,0,0
+1774417290263,12713,Optimize web_returns,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,12713,0,0
+1774417302976,25934,Optimize web_sales,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,25934,0,0
+1774462180202,318,USE SCHEMA  aistor.tpcds_sf5000_part,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,318,0,172
+1774462180524,3189,Optimize catalog_returns,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,3189,0,0
+1774462183713,439249,Optimize catalog_sales,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,439249,0,0
+1774462622964,2658,Optimize inventory,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,2658,0,0
+1774462625623,45497,Optimize store_returns,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,45497,0,0
+1774462671120,31322,Optimize store_sales,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,31322,0,0
+1774462702443,20437,Optimize web_returns,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,20437,0,0
+1774462722880,28810,Optimize web_sales,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,28810,0,1
