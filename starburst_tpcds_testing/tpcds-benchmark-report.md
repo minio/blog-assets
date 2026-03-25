@@ -21,8 +21,11 @@
    - 7.2 sf3000 (~3 TB)
    - 7.3 sf5000 (~5 TB)
    - 7.4 sf10000 (~10 TB)
-8. Cross-Scale Summary
-9. Appendix — Full Configuration
+8. Partitioned Results (ss_sold_date_sk)
+   - 8.1 sf1000 — Pre-Compaction
+   - 8.2 sf1000 — Post-Compaction
+9. Cross-Scale Summary
+10. Appendix — Full Configuration
 
 ---
 
@@ -763,7 +766,336 @@ All Iceberg tables loaded via CTAS from the TPC-DS source catalog. Data is **non
 
 ---
 
-## 7. Cross-Scale Summary
+## 8. Partitioned Results (ss_sold_date_sk)
+
+All tables in this section use a partitioned schema with `store_sales` (and related fact tables) partitioned on `ss_sold_date_sk`. This enables Iceberg partition pruning to skip entire date ranges during scans, dramatically reducing I/O for date-filtered queries.
+
+### 8.1 sf1000 — Pre-Compaction
+
+> **Note:** This run uses the partitioned schema prior to running `ALTER TABLE EXECUTE OPTIMIZE`. File sizes are not yet compacted; results reflect partitioning benefit only.
+
+**Summary**
+
+| Metric | Non-Partitioned | Partitioned (Pre-Compaction) | Change |
+|---|---|---|---|
+| Queries Completed | 99 / 99 | 99 / 99 | — |
+| Total Time (cold run) | 747.1 s (12.5 min) | 582.6 s (9.7 min) | **−22%** |
+| Total Time (avg 3 runs) | 713.5 s (11.9 min) | 582.6 s (9.7 min) | **−18%** |
+| Geometric Mean | 6.0 s | 4.4 s | **−27%** |
+| Fastest Query | Q2 — 4.0 s | Q41/Q92 — 1.4 s | |
+| Slowest Query | Q68 — 46.5 s | Q67 — 43.4 s | |
+
+**Time Distribution**
+
+| Bucket | Non-Partitioned | Partitioned (Pre-Compaction) |
+|---|---|---|
+| < 10 s | 86 | 85 |
+| 10 – 30 s | 11 | 13 |
+| 30 – 60 s | 2 | 1 |
+| > 1 min | 0 | 0 |
+
+**Biggest Winners — Partition Pruning**
+
+| Query | Non-Partitioned Avg (s) | Partitioned (s) | Speedup |
+|---|---|---|---|
+| Q68 | 46.5 | 2.7 | **17.2×** |
+| Q35 | 46.0 | 3.4 | **13.5×** |
+| Q55 | 15.6 | 1.7 | **9.2×** |
+| Q42 | 14.1 | 1.6 | **8.8×** |
+| Q41 | 8.7 | 1.4 | **6.2×** |
+| Q36 | 11.5 | 1.9 | **6.1×** |
+| Q69 | 15.7 | 2.8 | **5.6×** |
+| Q10 | 16.9 | 5.3 | 3.2× |
+| Q93 | 24.9 | 14.9 | 1.7× |
+| Q51 | 16.4 | 6.6 | 2.5× |
+
+**Queries with Regression — No Date Predicate on store_sales**
+
+| Query | Non-Partitioned Avg (s) | Partitioned (s) | Slowdown |
+|---|---|---|---|
+| Q67 | 6.2 | 43.4 | 7.0× |
+| Q04 | 4.1 | 24.5 | 6.0× |
+| Q23 | 5.7 | 29.9 | 5.2× |
+| Q72 | 4.0 | 16.8 | 4.2× |
+| Q22 | 4.0 | 15.5 | 3.9× |
+| Q14 | 4.0 | 15.3 | 3.8× |
+
+These queries do not filter on `ss_sold_date_sk`, so they receive no pruning benefit and pay a small overhead from the partitioned metadata layout.
+
+**Per-Query Results**
+
+| Query | Partitioned (s) | Non-Partitioned Avg (s) | Delta (s) |
+|---|---|---|---|
+| Q1 | 7.7 | 6.9 | +0.8 |
+| Q2 | 3.4 | 4.0 | −0.6 |
+| Q3 | 2.1 | 6.8 | −4.7 |
+| Q4 | 24.5 | 4.1 | +20.4 |
+| Q5 | 3.9 | 6.4 | −2.5 |
+| Q6 | 4.3 | 8.4 | −4.1 |
+| Q7 | 3.5 | 4.6 | −1.1 |
+| Q8 | 2.4 | 6.1 | −3.7 |
+| Q9 | 11.7 | 8.7 | +3.0 |
+| Q10 | 5.3 | 16.9 | −11.6 |
+| Q11 | 11.5 | 4.0 | +7.5 |
+| Q12 | 3.1 | 6.2 | −3.1 |
+| Q13 | 2.4 | 4.0 | −1.6 |
+| Q14 | 15.3 | 4.0 | +11.3 |
+| Q15 | 2.5 | 4.0 | −1.5 |
+| Q16 | 6.0 | 4.0 | +2.0 |
+| Q17 | 4.9 | 4.1 | +0.8 |
+| Q18 | 4.7 | 4.1 | +0.6 |
+| Q19 | 3.2 | 5.9 | −2.7 |
+| Q20 | 2.9 | 10.0 | −7.1 |
+| Q21 | 1.9 | 6.1 | −4.2 |
+| Q22 | 15.5 | 4.0 | +11.5 |
+| Q23 | 29.9 | 5.7 | +24.2 |
+| Q24 | 11.9 | 4.0 | +7.9 |
+| Q25 | 3.6 | 5.6 | −2.0 |
+| Q26 | 2.7 | 5.6 | −2.9 |
+| Q27 | 2.8 | 4.0 | −1.2 |
+| Q28 | 9.5 | 4.6 | +4.9 |
+| Q29 | 5.1 | 4.0 | +1.1 |
+| Q30 | 4.2 | 6.6 | −2.4 |
+| Q31 | 3.2 | 4.3 | −1.1 |
+| Q32 | 1.6 | 4.0 | −2.4 |
+| Q33 | 2.9 | 4.0 | −1.1 |
+| Q34 | 2.1 | 7.5 | −5.4 |
+| Q35 | 3.4 | 46.0 | −42.6 |
+| Q36 | 1.9 | 11.5 | −9.6 |
+| Q37 | 4.6 | 4.4 | +0.2 |
+| Q38 | 5.0 | 7.8 | −2.8 |
+| Q39 | 5.3 | 4.0 | +1.3 |
+| Q40 | 3.8 | 4.2 | −0.4 |
+| Q41 | 1.4 | 8.7 | −7.3 |
+| Q42 | 1.6 | 14.1 | −12.5 |
+| Q43 | 2.5 | 6.8 | −4.3 |
+| Q44 | 6.9 | 4.0 | +2.9 |
+| Q45 | 2.3 | 4.0 | −1.7 |
+| Q46 | 3.6 | 7.3 | −3.7 |
+| Q47 | 8.5 | 5.4 | +3.1 |
+| Q48 | 3.2 | 6.7 | −3.5 |
+| Q49 | 6.0 | 9.6 | −3.6 |
+| Q50 | 5.9 | 9.0 | −3.1 |
+| Q51 | 6.6 | 16.4 | −9.8 |
+| Q52 | 1.9 | 4.0 | −2.1 |
+| Q53 | 2.6 | 8.7 | −6.1 |
+| Q54 | 4.3 | 7.3 | −3.0 |
+| Q55 | 1.7 | 15.6 | −13.9 |
+| Q56 | 2.6 | 4.0 | −1.4 |
+| Q57 | 7.7 | 4.1 | +3.6 |
+| Q58 | 3.7 | 5.0 | −1.3 |
+| Q59 | 4.3 | 4.1 | +0.2 |
+| Q60 | 3.1 | 5.3 | −2.2 |
+| Q61 | 2.9 | 4.0 | −1.1 |
+| Q62 | 2.9 | 4.0 | −1.1 |
+| Q63 | 2.1 | 4.1 | −2.0 |
+| Q64 | 13.3 | 4.0 | +9.3 |
+| Q65 | 8.2 | 4.0 | +4.2 |
+| Q66 | 3.3 | 8.7 | −5.4 |
+| Q67 | 43.4 | 6.2 | +37.2 |
+| Q68 | 2.7 | 46.5 | −43.8 |
+| Q69 | 2.8 | 15.7 | −12.9 |
+| Q70 | 3.4 | 13.3 | −9.9 |
+| Q71 | 2.5 | 9.1 | −6.6 |
+| Q72 | 16.8 | 4.0 | +12.8 |
+| Q73 | 1.8 | 4.0 | −2.2 |
+| Q74 | 6.5 | 4.0 | +2.5 |
+| Q75 | 12.2 | 4.8 | +7.4 |
+| Q76 | 8.5 | 10.8 | −2.3 |
+| Q77 | 2.6 | 7.3 | −4.7 |
+| Q78 | 17.0 | 7.5 | +9.5 |
+| Q79 | 3.2 | 4.0 | −0.8 |
+| Q80 | 6.5 | 4.0 | +2.5 |
+| Q81 | 5.2 | 5.1 | +0.1 |
+| Q82 | 4.3 | 4.1 | +0.2 |
+| Q83 | 4.4 | 4.0 | +0.4 |
+| Q84 | 3.7 | 4.7 | −1.0 |
+| Q85 | 2.8 | 4.0 | −1.2 |
+| Q86 | 2.4 | 4.0 | −1.6 |
+| Q87 | 4.2 | 13.3 | −9.1 |
+| Q88 | 10.2 | 4.0 | +6.2 |
+| Q89 | 3.3 | 7.0 | −3.7 |
+| Q90 | 3.8 | 4.0 | −0.2 |
+| Q91 | 2.0 | 4.0 | −2.0 |
+| Q92 | 1.4 | 6.8 | −5.4 |
+| Q93 | 14.9 | 24.9 | −10.0 |
+| Q94 | 3.6 | 4.3 | −0.7 |
+| Q95 | 8.0 | 4.8 | +3.2 |
+| Q96 | 4.2 | 4.6 | −0.4 |
+| Q97 | 7.3 | 4.0 | +3.3 |
+| Q98 | 3.0 | 8.0 | −5.0 |
+| Q99 | 4.7 | 6.7 | −2.0 |
+| **Total** | **582.6** | **713.5 (avg)** | **−130.9** |
+| **Geo Mean** | **4.4** | **6.0** | **−27%** |
+
+---
+
+### 8.2 sf1000 — Post-Compaction
+
+> **Note:** This run was taken immediately after running `ALTER TABLE EXECUTE OPTIMIZE` on all 7 fact tables (catalog_returns, catalog_sales, inventory, store_returns, store_sales, web_returns, web_sales). Compaction took **228.8 s (3.8 min)** total; `store_sales` alone took 136.5 s. File count in `store_sales` dropped from **2,269 → 1,835** (avg size 43 MB → 53 MB).
+
+**Summary**
+
+| Metric | Non-Partitioned | Pre-Compaction | Post-Compaction | vs Pre | vs Non-Part |
+|---|---|---|---|---|---|
+| Queries Completed | 99 / 99 | 99 / 99 | 99 / 99 | — | — |
+| Total Time (cold) | 747.1 s (12.5 min) | 582.6 s (9.7 min) | 538.8 s (9.0 min) | **−7.5%** | **−28%** |
+| Geometric Mean | 6.0 s | 4.4 s | 4.0 s | **−9%** | **−33%** |
+| Fastest Query | Q2 — 4.0 s | Q41/Q92 — 1.4 s | Q92 — 1.4 s | | |
+| Slowest Query | Q68 — 46.5 s | Q67 — 43.4 s | Q22 — 33.5 s | | |
+
+**File Layout After Compaction**
+
+| Table | Pre-Compaction Files | Post-Compaction Files | Avg File Size |
+|---|---|---|---|
+| store_sales | 2,269 | 1,835 | 53 MB |
+| Non-partitioned baseline | 512 | — | 188 MB |
+
+> The default `EXECUTE optimize` (no `file_size_threshold`) reduces small files within each partition but cannot merge across partition boundaries. The minimum achievable file count is bounded by the number of distinct date values in the dataset (~1,800+ for SF1000), leaving store_sales at 3.6× more files than the non-partitioned table.
+
+**Time Distribution**
+
+| Bucket | Non-Partitioned | Pre-Compaction | Post-Compaction |
+|---|---|---|---|
+| < 10 s | 86 | 85 | 86 |
+| 10 – 30 s | 11 | 13 | 11 |
+| 30 – 60 s | 2 | 1 | 2 |
+| > 1 min | 0 | 0 | 0 |
+
+**Biggest Improvements — Pre vs Post Compaction**
+
+| Query | Pre-Compaction (s) | Post-Compaction (s) | Change |
+|---|---|---|---|
+| Q01 | 7.7 | 3.7 | **−52%** |
+| Q10 | 5.3 | 2.6 | **−51%** |
+| Q51 | 6.6 | 3.9 | **−41%** |
+| Q97 | 7.3 | 4.5 | **−38%** |
+| Q76 | 8.5 | 5.4 | **−36%** |
+| Q06 | 4.3 | 2.7 | **−36%** |
+
+**Expected Regression Queries — Behavior After Compaction**
+
+These queries lack `ss_sold_date_sk` predicates and do full scans of `store_sales`. Compaction partially reduces the file-open overhead but cannot fully close the gap with the non-partitioned table.
+
+| Query | Non-Part Avg (s) | Pre-Compaction (s) | Post-Compaction (s) | Note |
+|---|---|---|---|---|
+| Q67 | 6.2 | 43.4 | 33.1 | **−24%** from pre; joins via `ss_item_sk` only |
+| Q04 | 4.1 | 24.5 | 18.4 | **−25%** from pre; filters `ss_store_sk=6` only |
+| Q23 | 5.7 | 29.9 | 31.2 | Flat; date filter is a join predicate, no pruning |
+
+**Notable Regression — Q22**
+
+Q22 unexpectedly regressed from 15.5 s to 33.5 s (+115%) after compaction. This is the largest single-query movement and likely reflects a query plan change post-OPTIMIZE (Iceberg snapshot metadata update may alter statistics used for join ordering).
+
+**Per-Query Results**
+
+| Query | Non-Part Avg (s) | Pre-Compact (s) | Post-Compact (s) | Pre→Post |
+|---|---|---|---|---|
+| Q1 | 6.9 | 7.7 | 3.7 | −52% |
+| Q2 | 4.0 | 3.4 | 3.6 | +8% |
+| Q3 | 6.8 | 2.1 | 1.5 | −28% |
+| Q4 | 4.1 | 24.5 | 18.4 | −25% |
+| Q5 | 6.4 | 3.9 | 4.0 | +1% |
+| Q6 | 8.4 | 4.3 | 2.7 | −36% |
+| Q7 | 4.6 | 3.5 | 3.7 | +6% |
+| Q8 | 6.1 | 2.4 | 2.6 | +9% |
+| Q9 | 8.7 | 11.7 | 11.7 | 0% |
+| Q10 | 16.9 | 5.3 | 2.6 | −51% |
+| Q11 | 4.0 | 11.5 | 9.9 | −13% |
+| Q12 | 6.2 | 3.1 | 2.7 | −13% |
+| Q13 | 4.0 | 2.4 | 3.0 | +27% |
+| Q14 | 4.0 | 15.3 | 13.4 | −12% |
+| Q15 | 4.0 | 2.5 | 2.0 | −18% |
+| Q16 | 4.0 | 6.0 | 4.3 | −30% |
+| Q17 | 4.1 | 4.9 | 4.1 | −17% |
+| Q18 | 4.1 | 4.7 | 4.8 | +3% |
+| Q19 | 5.9 | 3.2 | 2.4 | −25% |
+| Q20 | 10.0 | 2.9 | 2.6 | −12% |
+| Q21 | 6.1 | 1.9 | 2.4 | +25% |
+| Q22 | 4.0 | 15.5 | 33.5 | **+115%** |
+| Q23 | 5.7 | 29.9 | 31.2 | +4% |
+| Q24 | 4.0 | 11.9 | 9.2 | −23% |
+| Q25 | 5.6 | 3.6 | 3.0 | −16% |
+| Q26 | 5.6 | 2.7 | 2.7 | 0% |
+| Q27 | 4.0 | 2.8 | 3.5 | +25% |
+| Q28 | 4.6 | 9.5 | 9.7 | +1% |
+| Q29 | 4.0 | 5.1 | 5.1 | −1% |
+| Q30 | 6.6 | 4.2 | 3.7 | −13% |
+| Q31 | 4.3 | 3.2 | 3.8 | +21% |
+| Q32 | 4.0 | 1.6 | 1.4 | −13% |
+| Q33 | 4.0 | 2.9 | 2.6 | −12% |
+| Q34 | 7.5 | 2.1 | 2.1 | +1% |
+| Q35 | 46.0 | 3.4 | 3.5 | +5% |
+| Q36 | 11.5 | 1.9 | 2.0 | +5% |
+| Q37 | 4.4 | 4.6 | 3.4 | −25% |
+| Q38 | 7.8 | 5.0 | 5.4 | +9% |
+| Q39 | 4.0 | 5.3 | 4.0 | −24% |
+| Q40 | 4.2 | 3.8 | 3.1 | −18% |
+| Q41 | 8.7 | 1.4 | 1.4 | +1% |
+| Q42 | 14.1 | 1.6 | 1.6 | +2% |
+| Q43 | 6.8 | 2.5 | 1.9 | −23% |
+| Q44 | 4.0 | 6.9 | 7.6 | +10% |
+| Q45 | 4.0 | 2.3 | 2.1 | −9% |
+| Q46 | 7.3 | 3.6 | 2.7 | −26% |
+| Q47 | 5.4 | 8.5 | 8.2 | −3% |
+| Q48 | 6.7 | 3.2 | 3.6 | +11% |
+| Q49 | 9.6 | 6.0 | 4.3 | −29% |
+| Q50 | 9.0 | 5.9 | 6.0 | +2% |
+| Q51 | 16.4 | 6.6 | 3.9 | −41% |
+| Q52 | 4.0 | 1.9 | 1.9 | +1% |
+| Q53 | 8.7 | 2.6 | 2.5 | −4% |
+| Q54 | 7.3 | 4.3 | 3.6 | −16% |
+| Q55 | 15.6 | 1.7 | 2.6 | +51% |
+| Q56 | 4.0 | 2.6 | 3.4 | +33% |
+| Q57 | 4.1 | 7.7 | 6.1 | −22% |
+| Q58 | 5.0 | 3.7 | 3.6 | −4% |
+| Q59 | 4.1 | 4.3 | 4.3 | +2% |
+| Q60 | 5.3 | 3.1 | 3.2 | +4% |
+| Q61 | 4.0 | 2.9 | 2.9 | +2% |
+| Q62 | 4.0 | 2.9 | 3.0 | +1% |
+| Q63 | 4.1 | 2.1 | 2.2 | +8% |
+| Q64 | 4.0 | 13.3 | 15.8 | +19% |
+| Q65 | 4.0 | 8.2 | 6.7 | −18% |
+| Q66 | 8.7 | 3.3 | 2.3 | −29% |
+| Q67 | 6.2 | 43.4 | 33.1 | −24% |
+| Q68 | 46.5 | 2.7 | 2.9 | +7% |
+| Q69 | 15.7 | 2.8 | 2.4 | −14% |
+| Q70 | 13.3 | 3.4 | 3.1 | −10% |
+| Q71 | 9.1 | 2.5 | 2.3 | −6% |
+| Q72 | 4.0 | 16.8 | 20.0 | +19% |
+| Q73 | 4.0 | 1.8 | 1.8 | 0% |
+| Q74 | 4.0 | 6.5 | 5.2 | −20% |
+| Q75 | 4.8 | 12.2 | 10.8 | −12% |
+| Q76 | 10.8 | 8.5 | 5.4 | −36% |
+| Q77 | 7.3 | 2.6 | 2.6 | −1% |
+| Q78 | 7.5 | 17.0 | 13.5 | −21% |
+| Q79 | 4.0 | 3.2 | 2.9 | −8% |
+| Q80 | 4.0 | 6.5 | 5.3 | −20% |
+| Q81 | 5.1 | 5.2 | 4.4 | −15% |
+| Q82 | 4.1 | 4.3 | 4.3 | 0% |
+| Q83 | 4.0 | 4.4 | 4.1 | −7% |
+| Q84 | 4.7 | 3.7 | 3.2 | −13% |
+| Q85 | 4.0 | 2.8 | 2.9 | +3% |
+| Q86 | 4.0 | 2.4 | 2.0 | −17% |
+| Q87 | 13.3 | 4.2 | 3.2 | −23% |
+| Q88 | 4.0 | 10.2 | 8.2 | −20% |
+| Q89 | 7.0 | 3.3 | 2.7 | −18% |
+| Q90 | 4.0 | 3.8 | 3.2 | −17% |
+| Q91 | 4.0 | 2.0 | 1.9 | −6% |
+| Q92 | 6.8 | 1.4 | 1.4 | −3% |
+| Q93 | 24.9 | 14.9 | 12.9 | −13% |
+| Q94 | 4.3 | 3.6 | 3.6 | −1% |
+| Q95 | 4.8 | 8.0 | 7.5 | −7% |
+| Q96 | 4.6 | 4.2 | 3.6 | −15% |
+| Q97 | 4.0 | 7.3 | 4.5 | −38% |
+| Q98 | 8.0 | 3.0 | 3.2 | +6% |
+| Q99 | 6.7 | 4.7 | 4.6 | −2% |
+| **Total** | **713.5 (avg)** | **582.6** | **538.8** | **−7.5%** |
+| **Geo Mean** | **6.0** | **4.4** | **4.0** | **−9%** |
+
+---
+
+## 9. Cross-Scale Summary
 
 ### 7.1 Scale Factor Comparison
 
@@ -884,7 +1216,7 @@ All Iceberg tables loaded via CTAS from the TPC-DS source catalog. Data is **non
 
 ---
 
-## 8. Appendix — Full Configuration
+## 10. Appendix — Full Configuration
 
 ### A. Starburst coordinator/config.properties
 
