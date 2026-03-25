@@ -1,0 +1,9 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
+1774410542379,1456,USE SCHEMA  aistor.tpcds_sf1000_part,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,1456,0,2
+1774410543836,1637,Optimize catalog_returns,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,1637,0,0
+1774410545473,49700,Optimize catalog_sales,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,49700,0,0
+1774410595173,14268,Optimize inventory,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,14268,0,0
+1774410609442,11438,Optimize store_returns,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,11438,0,0
+1774410620881,136533,Optimize store_sales,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,136533,0,0
+1774410757414,4890,Optimize web_returns,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,4890,0,0
+1774410762305,10397,Optimize web_sales,200,OK,Thread Group 1-1,text,true,,9,0,1,1,null,10397,0,0
