@@ -2,14 +2,14 @@
 
 Query a live Iceberg data lakehouse using AI-generated code in 3 commands.
 
-- Download the [course files](workshop-01.zip)
+- Download this repo
 - Unzip and `cd` into the directory
 
 ---
 
 ## Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) running
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) or get docker running
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) installed (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
 - [OpenCode](https://opencode.ai) installed
 - An AIStor license file — copy it to `license/license`
