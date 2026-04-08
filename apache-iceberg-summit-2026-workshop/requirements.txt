@@ -1,0 +1,7 @@
+pyiceberg[s3fs,pyarrow]
+boto3
+requests
+pandas
+pyarrow
+trino
+matplotlib

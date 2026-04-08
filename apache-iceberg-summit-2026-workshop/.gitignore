@@ -1,0 +1,18 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.lock
+
+# Generated scripts (OpenCode output) — keep the folder, ignore all contents
+prompt-output/*
+prompt-output/**
+!prompt-output/.gitkeep
+*.png
+
+# Ruff cache
+.ruff_cache/
+
+# macOS
+.DS_Store

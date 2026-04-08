@@ -1,0 +1,67 @@
+services:
+  # MinIO AIStor — Tables-enabled object store
+  # EDGE build required — RELEASE does not expose the /_iceberg REST catalog
+  minio:
+    image: ${AISTOR_IMAGE:-quay.io/minio/aistor/minio:EDGE.2026-01-14T20-23-54Z}
+    hostname: minio
+    ports:
+      - "9000:9000"   # S3 API + Iceberg REST catalog at /_iceberg
+      - "9001:9001"   # Web Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001" --license /etc/minio/minio.license
+    volumes:
+      - minio-data:/data                          # named volume — lives inside Docker
+      - ./license/license:/etc/minio/minio.license
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - workshop-net
+
+  # Jupyter Lab — notebook runtime for the workshop
+  jupyter:
+    image: jupyter/scipy-notebook:latest
+    hostname: jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      JUPYTER_TOKEN: ""
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_REGION: local
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    networks:
+      - workshop-net
+
+  # Trino — distributed SQL query engine over the Iceberg REST catalog
+  trino:
+    image: trinodb/trino:latest
+    hostname: trino
+    depends_on:
+      minio:
+        condition: service_healthy
+    ports:
+      - "8090:8080"   # Trino Web UI + HTTP API
+    environment:
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_REGION: local
+    volumes:
+      - ./trino-config:/etc/trino/catalog
+      - ./trino-config/jvm.config:/etc/trino/jvm.config
+    networks:
+      - workshop-net
+
+volumes:
+  minio-data:     # managed by Docker — no host directory needed
+
+networks:
+  workshop-net:
+    driver: bridge
