@@ -1,0 +1,149 @@
+# ClickHouse + AIStor OAuth (OIDC) test
+# Keycloak issues OAuth tokens -> AIStor STS exchanges them for temporary S3
+# credentials -> ClickHouse reads/writes AIStor with those credentials.
+#
+# Demo defaults: passwords and client secrets below are demo values, Keycloak
+# runs in dev mode over plain HTTP, and ports bind to 127.0.0.1. See
+# "Moving to production" in the README.
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      # Tokens must carry the same issuer AIStor discovers, so pin it to the
+      # in-network hostname. The admin console stays reachable on localhost.
+      KC_HOSTNAME: http://keycloak:8080
+      KC_HOSTNAME_ADMIN: http://localhost:8080
+      KC_HEALTH_ENABLED: "true"
+      # Avoid JVM SIGILL crashes on newer Apple Silicon (SVE) under Docker.
+      JAVA_OPTS_APPEND: -XX:UseSVE=0
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    volumes:
+      - ./keycloak/realm-aistor.json:/opt/keycloak/data/import/realm-aistor.json:ro
+    networks:
+      - oauth
+
+  minio:
+    image: ${MINIO_TEST_IMAGE}
+    pull_policy: if_not_present
+    hostname: minio
+    command: server --console-address ":9001" /data
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    environment:
+      MINIO_LICENSE: ${MINIO_LICENSE}
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_IDENTITY_OPENID_CONFIG_URL: http://keycloak:8080/realms/aistor/.well-known/openid-configuration
+      # Both Keycloak clients add "aistor" to the token audience.
+      MINIO_IDENTITY_OPENID_CLIENT_ID: aistor
+      # Token claim that names the AIStor policy to apply.
+      MINIO_IDENTITY_OPENID_CLAIM_NAME: policy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+    volumes:
+      - minio_data:/data
+    networks:
+      - oauth
+
+  # One-shot setup with root credentials:
+  #  - bucket + scoped readwrite/readonly policies for the Parquet test. These
+  #    include s3:ListBucket, which ClickHouse needs to expand globs.
+  #  - AIStor Tables warehouse "analytics", namespace "demo", and the
+  #    clickhouse-svc user that ClickHouse uses for the Iceberg catalog.
+  minio-init:
+    image: ${MINIO_TEST_IMAGE}
+    pull_policy: if_not_present
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc mb --ignore-existing local/clickhouse-oauth &&
+        mc admin policy create local clickhouse-readwrite /policies/clickhouse-readwrite.json &&
+        mc admin policy create local clickhouse-readonly /policies/clickhouse-readonly.json &&
+        mc table warehouse create --ignore-existing local/analytics &&
+        mc table namespace create --ignore-existing local/analytics/demo &&
+        mc admin policy create local clickhouse-tables /policies/clickhouse-tables.json &&
+        mc admin user add local clickhouse-svc clickhouse-svc-secret &&
+        mc admin policy attach local clickhouse-tables --user clickhouse-svc
+    volumes:
+      - ./policies:/policies:ro
+    networks:
+      - oauth
+
+  clickhouse:
+    # 26.x is needed for CREATE TABLE / INSERT through an Iceberg REST catalog.
+    image: ${CLICKHOUSE_IMAGE:-clickhouse/clickhouse-server:26.9}
+    hostname: clickhouse
+    depends_on:
+      minio:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8123:8123"
+      - "127.0.0.1:9100:9000"
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8123/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    networks:
+      - oauth
+
+  # Runs the end-to-end test (stdlib Python only): docker compose run --rm tester
+  tester:
+    image: python:3.12-slim
+    profiles: ["test"]
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080/realms/aistor
+      AISTOR_URL: http://minio:9000
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: clickhouse
+      BUCKET: clickhouse-oauth
+    volumes:
+      - ./scripts:/scripts:ro
+    entrypoint: ["python", "-u", "/scripts/test_oauth.py"]
+    networks:
+      - oauth
+
+networks:
+  oauth:
+
+volumes:
+  minio_data:
+  clickhouse_data:
