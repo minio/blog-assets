@@ -1,0 +1,15 @@
+.env
+.DS_Store
+__pycache__/
+*.pyc
+
+# Written by OLake at runtime (discover, sync, logs)
+olake/available_streams.json
+olake/selected_streams.json
+olake/streams.json
+olake/state.json
+olake/stats.json
+olake/sync_*/
+olake/logs/
+olake/user_id.txt
+olake/*.log
