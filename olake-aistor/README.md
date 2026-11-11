@@ -25,7 +25,7 @@ OLake (olakego/source-postgres)
 ```
 
 Tested 2026-11-11 with AIStor `RELEASE.2026-09-19T17-05-25Z.hotfix.175a5c7f2f85`,
-OLake `v1.1.2`, Postgres 16 and DuckDB 1.5.5 (24/24 checks across both
+OLake `v1.1.2`, Postgres 16 and DuckDB 1.5.5 (26/26 checks across both
 syncs). OLake's own
 [Postgres to AIStor guide](https://olake.io/docs/integrations/postgres-to-aistor/)
 was tested with OLake v1.1.1 against the same AIStor release.
@@ -151,6 +151,7 @@ independent ways after each sync.
 | OLake created the `olake_shop_public` namespace |
 | `customers` and `orders` are registered |
 | Each table has a current snapshot (2 or more after the change sync) |
+| After the change sync: updates are positional deletes (customers 2, orders 3), with no equality deletes |
 
 **DuckDB, attached to the same catalog with SigV4:**
 

@@ -31,6 +31,9 @@ EXPECTED = {
     "initial": {"customers": 8, "orders": 40, "amount": 6345.00},
     "changes": {"customers": 10, "orders": 45, "amount": 8188.39},
 }
+# Rows retired by the UPDATEs in changes.sql. With update_type "pos", each one
+# becomes a positional delete, not an equality delete.
+EXPECTED_POS_DELETES = {"customers": 2, "orders": 3}
 
 results = []
 
@@ -116,6 +119,13 @@ def catalog_checks(phase):
               f"current snapshot: {summary.get('operation')}, "
               f"total-records={summary.get('total-records')}, "
               f"total-position-deletes={summary.get('total-position-deletes')}")
+        if phase == "changes":
+            pos = summary.get("total-position-deletes")
+            eq = summary.get("total-equality-deletes")
+            want_pos = EXPECTED_POS_DELETES[t]
+            check(f"{t}: updates written as {want_pos} positional deletes, no equality deletes",
+                  pos == str(want_pos) and eq in ("0", None),
+                  f"total-position-deletes={pos}, total-equality-deletes={eq}")
     return ns
 
 
