@@ -67,7 +67,7 @@ up)
 	docker compose run --rm tester initial
 
 	step "Changing rows in Postgres (7 inserts, 5 updates)"
-	docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U postgres -d shop -f /changes.sql
+	docker compose exec -T postgres psql -1 -v ON_ERROR_STOP=1 -U postgres -d shop -f /changes.sql
 
 	step "Second sync: CDC from the WAL"
 	sync
