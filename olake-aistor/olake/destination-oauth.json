@@ -1,0 +1,19 @@
+{
+  "type": "ICEBERG",
+  "writer": {
+    "catalog_type": "rest",
+    "catalog_name": "aistor",
+    "rest_catalog_url": "http://minio:9000/_iceberg",
+    "iceberg_s3_path": "analytics",
+    "rest_auth_type": "oauth2",
+    "oauth2_uri": "http://minio:9000/_iceberg/v1/oauth/tokens",
+    "credential": "olake-svc:olake-svc-secret",
+    "scope": "catalog",
+    "aws_region": "us-east-1",
+    "aws_access_key": "olake-svc",
+    "aws_secret_key": "olake-svc-secret",
+    "s3_endpoint": "http://minio:9000",
+    "s3_path_style": true,
+    "s3_use_ssl": false
+  }
+}

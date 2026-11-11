@@ -1,0 +1,16 @@
+{
+  "host": "postgres",
+  "port": 5432,
+  "database": "shop",
+  "username": "olake",
+  "password": "olake",
+  "jdbc_url_params": {},
+  "ssl": { "mode": "disable" },
+  "update_method": {
+    "replication_slot": "olake_slot",
+    "publication": "olake_pub",
+    "initial_wait_time": 120
+  },
+  "max_threads": 4,
+  "retry_count": 3
+}

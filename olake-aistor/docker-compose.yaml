@@ -1,0 +1,125 @@
+# OLake + AIStor Tables demo
+# Postgres (logical replication) -> OLake (CDC) -> Iceberg tables in an AIStor
+# Tables warehouse, committed through AIStor's built-in Iceberg REST catalog.
+#
+# Demo defaults: passwords and keys below are demo values and ports bind to
+# 127.0.0.1. See "Moving to production" in the README.
+
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgres:16}
+    hostname: postgres
+    # Logical decoding for CDC. wal_sender_timeout=0 keeps OLake's replication
+    # connection open while it writes a large batch.
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=10
+      - -c
+      - wal_sender_timeout=0
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: shop
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shop"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+      - ./postgres/changes.sql:/changes.sql:ro
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lake
+
+  minio:
+    image: ${MINIO_TEST_IMAGE}
+    pull_policy: if_not_present
+    hostname: minio
+    command: server --console-address ":9001" /data
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    environment:
+      MINIO_LICENSE: ${MINIO_LICENSE}
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+    volumes:
+      - minio_data:/data
+    networks:
+      - lake
+
+  # One-shot setup with root credentials: AIStor Tables warehouse "analytics"
+  # and the olake-svc user, scoped to that warehouse.
+  minio-init:
+    image: ${MINIO_TEST_IMAGE}
+    pull_policy: if_not_present
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc table warehouse create --ignore-existing local/analytics &&
+        mc admin policy create local olake-tables /policies/olake-tables.json &&
+        mc admin user add local olake-svc olake-svc-secret &&
+        (mc admin policy attach local olake-tables --user olake-svc || mc admin user info local olake-svc | grep -q olake-tables)
+    volumes:
+      - ./policies:/policies:ro
+    networks:
+      - lake
+
+  # OLake CLI. Run one command at a time, for example:
+  #   docker compose run --rm olake discover --config /mnt/config/source.json
+  # Discover/sync output (streams, state, logs) lands in ./olake.
+  olake:
+    image: ${OLAKE_IMAGE:-olakego/source-postgres:v1.1.2}
+    profiles: ["olake"]
+    volumes:
+      - ./olake:/mnt/config
+    networks:
+      - lake
+
+  # Verifies the synced tables two ways: the AIStor catalog API (OAuth) and
+  # DuckDB reading the rows (SigV4).
+  #   docker compose run --rm tester initial|changes
+  tester:
+    image: python:3.12-slim
+    profiles: ["test"]
+    environment:
+      AISTOR_URL: http://minio:9000
+      AISTOR_HOSTPORT: minio:9000
+      WAREHOUSE: analytics
+      ACCESS_KEY: olake-svc
+      SECRET_KEY: olake-svc-secret
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      PIP_ROOT_USER_ACTION: ignore
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./olake:/mnt/config
+      - pip_cache:/root/.cache/pip
+    entrypoint: ["/bin/sh", "/scripts/tester.sh"]
+    networks:
+      - lake
+
+networks:
+  lake:
+
+volumes:
+  postgres_data:
+  minio_data:
+  pip_cache:
