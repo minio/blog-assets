@@ -40,6 +40,15 @@ sync() {
 
 case "${1:-up}" in
 up)
+	# The demo expects a fresh Postgres and warehouse. A rerun on top of an
+	# earlier one would fail the "initial" checks and re-apply changes.sql.
+	if [ -f olake/state.json ]; then
+		echo "A previous demo run exists (olake/state.json)." >&2
+		echo "  Re-verify it:   $0 test" >&2
+		echo "  Start fresh:    $0 down && $0" >&2
+		exit 1
+	fi
+
 	step "Starting Postgres and AIStor"
 	docker compose up -d --wait postgres minio
 	docker compose up minio-init

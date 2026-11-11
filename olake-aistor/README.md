@@ -46,6 +46,9 @@ cp .env.example .env        # set MINIO_LICENSE
 ./scripts/run.sh down       # tear down, remove volumes and OLake output
 ```
 
+`run.sh` expects a fresh stack. If an earlier run exists, it stops and tells
+you to run `test` to re-verify it, or `down` to start over.
+
 The demo pins the AIStor release it was tested with. To try a newer one,
 set the image for a single run, or change `MINIO_TEST_IMAGE` in `.env`:
 
