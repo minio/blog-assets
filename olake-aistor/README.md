@@ -91,6 +91,7 @@ a *Generic REST* catalog with SigV4:
   "type": "ICEBERG",
   "writer": {
     "catalog_type": "rest",
+    "catalog_name": "aistor",
     "rest_catalog_url": "http://minio:9000/_iceberg",
     "iceberg_s3_path": "analytics",
     "rest_auth_type": "sigv4",
