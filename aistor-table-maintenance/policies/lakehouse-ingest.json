@@ -1,0 +1,42 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CatalogAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3tables:GetConfig",
+        "s3tables:GetTableBucket",
+        "s3tables:ListNamespaces",
+        "s3tables:GetNamespace",
+        "s3tables:CreateNamespace",
+        "s3tables:DeleteNamespace",
+        "s3tables:ListTables",
+        "s3tables:CreateTable",
+        "s3tables:GetTable",
+        "s3tables:UpdateTable",
+        "s3tables:DeleteTable",
+        "s3tables:GetTableData",
+        "s3tables:PutTableData",
+        "s3tables:GetTableMaintenanceConfiguration",
+        "s3tables:GetTableMaintenanceJobStatus"
+      ],
+      "Resource": [
+        "arn:aws:s3tables:::bucket/lakehouse",
+        "arn:aws:s3tables:::bucket/lakehouse/*"
+      ]
+    },
+    {
+      "Sid": "WarehouseData",
+      "Effect": "Allow",
+      "Action": ["s3:GetBucketLocation", "s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::lakehouse"]
+    },
+    {
+      "Sid": "WarehouseObjects",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": ["arn:aws:s3:::lakehouse/*"]
+    }
+  ]
+}

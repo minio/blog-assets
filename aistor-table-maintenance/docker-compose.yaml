@@ -1,0 +1,125 @@
+# AIStor Tables: automated table maintenance demo
+#
+# A writer streams many small batches into an Iceberg table in AIStor Tables,
+# leaving the small files, snapshots and unreferenced files that streaming
+# ingest always leaves. AIStor then cleans the table up on its own:
+# compaction, snapshot expiration and unreferenced file removal.
+#
+# Demo defaults: passwords and keys below are demo values and ports bind to
+# 127.0.0.1. See "Moving to production" in the README.
+
+x-mc-env: &mc-env
+  # mc reads its alias from MC_HOST_<alias>, so no `mc alias set` is needed.
+  MC_HOST_aistor: http://minioadmin:minioadmin@minio:9000
+
+services:
+  minio:
+    image: ${MINIO_TEST_IMAGE}
+    pull_policy: if_not_present
+    hostname: minio
+    command: server --console-address ":9001" /data
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    environment:
+      MINIO_LICENSE: ${MINIO_LICENSE}
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      # Lets Prometheus-style metrics be read without a bearer token (demo only).
+      MINIO_PROMETHEUS_AUTH_TYPE: public
+      # Demo timing. AIStor checks for maintenance work every 24h by default;
+      # check every minute so cleanup happens while you watch.
+      MINIO_TABLES_MAINTENANCE_POLL_INTERVAL: 1m
+      MINIO_TABLES_COMPACTION_INTERVAL: 1m
+      MINIO_TABLES_SNAPSHOT_EXPIRY_INTERVAL: 1m
+      MINIO_TABLES_UNREFERENCED_FILE_REMOVAL_INTERVAL: 1m
+      # Undocumented settings, demo only. Never set these in production.
+      # Start maintenance 10s after boot instead of after the default startup
+      # delay, and lower the retention floors (normally 1 hour of snapshot
+      # age and 1 day unreferenced) so the whole cleanup fits in a few minutes.
+      _MINIO_TABLE_MAINTENANCE_STARTUP_DELAY: 10s
+      _MINIO_TABLE_MAINTENANCE_MIN_SNAPSHOT_AGE_HOURS: "0"
+      _MINIO_TABLE_UFR_MIN_UNREFERENCED_DAYS: "0"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+    volumes:
+      - minio_data:/data
+    networks:
+      - lake
+
+  # One-shot setup with root credentials: the "lakehouse" warehouse and the
+  # ingest-svc user that the writer and notebook use.
+  minio-init:
+    image: ${MINIO_TEST_IMAGE}
+    pull_policy: if_not_present
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment: *mc-env
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        mc table warehouse create --ignore-existing aistor/lakehouse &&
+        mc admin policy create aistor lakehouse-ingest /policies/lakehouse-ingest.json &&
+        mc admin user add aistor ingest-svc ingest-svc-secret &&
+        (mc admin policy attach aistor lakehouse-ingest --user ingest-svc || mc admin user info aistor ingest-svc | grep -q lakehouse-ingest)
+    volumes:
+      - ./policies:/policies:ro
+    networks:
+      - lake
+
+  # Admin CLI for maintenance settings and status:
+  #   docker compose run --rm mc table maintenance info aistor/lakehouse/iot/sensor_readings
+  mc:
+    image: ${MINIO_TEST_IMAGE}
+    pull_policy: if_not_present
+    profiles: ["tools"]
+    environment: *mc-env
+    entrypoint: ["mc"]
+    networks:
+      - lake
+
+  # Python + PyIceberg + DuckDB. Runs the writer and inspector scripts, and
+  # serves the notebook on http://localhost:8888.
+  lab:
+    build: ./lab
+    image: aistor-table-maintenance-lab:local
+    hostname: lab
+    profiles: ["lab"]
+    environment:
+      AISTOR_URL: http://minio:9000
+      WAREHOUSE: lakehouse
+      ACCESS_KEY: ingest-svc
+      SECRET_KEY: ingest-svc-secret
+      PYTHONPATH: /work/scripts
+      # PyIceberg has no compiled Avro decoder for linux/arm64, so it warns
+      # that it's using the pure-Python one. Harmless; hide that one message
+      # so it doesn't clutter the demo. Other warnings still show.
+      PYTHONWARNINGS: "ignore:Falling back to pure Python Avro decoder"
+    ports:
+      - "127.0.0.1:8888:8888"
+    volumes:
+      - ./scripts:/work/scripts
+      - ./notebooks:/work/notebooks
+      - ./out:/work/out
+    working_dir: /work
+    command:
+      - jupyter
+      - lab
+      - --ip=0.0.0.0
+      - --no-browser
+      - --allow-root
+      - --IdentityProvider.token=
+      - --ServerApp.root_dir=/work/notebooks
+    networks:
+      - lake
+
+networks:
+  lake:
+
+volumes:
+  minio_data:
