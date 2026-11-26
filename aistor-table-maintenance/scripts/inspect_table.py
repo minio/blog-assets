@@ -40,19 +40,26 @@ def watch(before: dict, timeout: int, min_snapshots: int) -> int:
     cat = lh.catalog()
     done = {}
     objects_at_compaction = None
+    saw_uncompacted = False
     deadline = time.time() + timeout
     while time.time() < deadline:
         h = lh.health(cat, query_runs=0)
         compacted = h.data_files < before["data_files"]
-        if compacted and objects_at_compaction is None:
+        if not compacted:
+            saw_uncompacted = True
+        elif objects_at_compaction is None:
             objects_at_compaction = h.objects_on_storage
         checks = {
             "compaction": compacted,
             "snapshot expiration": h.snapshots <= min_snapshots + 1 < before["snapshots"],
             # Wait for the sweep after compaction, which removes the files that
             # compaction and snapshot expiration left unreferenced.
-            "unreferenced file removal": (objects_at_compaction is not None
-                                          and h.objects_on_storage < objects_at_compaction),
+            # If compaction had already run before the first poll, there's no
+            # count from before it, so compare with the starting point instead.
+            "unreferenced file removal": compacted and (
+                h.objects_on_storage < objects_at_compaction
+                or (not saw_uncompacted
+                    and h.objects_on_storage < before["objects_on_storage"])),
         }
         for job, ok in checks.items():
             if ok and job not in done:

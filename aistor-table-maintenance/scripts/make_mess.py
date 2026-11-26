@@ -51,7 +51,8 @@ def main() -> None:
     started = time.perf_counter()
     t0 = datetime.now(timezone.utc)
     for i in range(args.batches):
-        table.append(batch(start_id + i * args.rows, args.rows, t0 + timedelta(seconds=5 * i)))
+        table = lh.append(cat, table, batch(start_id + i * args.rows, args.rows,
+                                            t0 + timedelta(seconds=5 * i)))
         if (i + 1) % 25 == 0 or i + 1 == args.batches:
             print(f"  committed {i + 1:>4}/{args.batches} batches")
     print(f"Done in {time.perf_counter() - started:.0f}s")

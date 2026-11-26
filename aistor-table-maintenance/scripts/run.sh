@@ -67,7 +67,7 @@ up)
 	step "Starting AIStor and creating the 'lakehouse' warehouse"
 	docker compose build -q lab
 	docker compose up -d --wait minio
-	docker compose up minio-init
+	docker compose run --rm minio-init
 
 	step "Streaming $BATCHES micro-batches into iot.sensor_readings (no maintenance yet)"
 	mess
@@ -95,7 +95,7 @@ start)
 	step "Starting AIStor, the 'lakehouse' warehouse and Jupyter"
 	docker compose build -q lab
 	docker compose up -d --wait minio
-	docker compose up minio-init
+	docker compose run --rm minio-init
 	docker compose up -d lab
 	echo ""
 	echo "Notebook:       http://localhost:8888/lab/tree/table-maintenance.ipynb"

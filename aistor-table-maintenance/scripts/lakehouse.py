@@ -10,7 +10,7 @@ import duckdb
 import pyarrow as pa
 from pyarrow import fs as pafs
 from pyiceberg.catalog.rest import RestCatalog
-from pyiceberg.exceptions import NamespaceAlreadyExistsError
+from pyiceberg.exceptions import CommitFailedException, NamespaceAlreadyExistsError
 from pyiceberg.schema import Schema
 from pyiceberg.types import (DoubleType, LongType, NestedField, StringType,
                              TimestamptzType)
@@ -63,6 +63,22 @@ def ensure_table(cat: RestCatalog):
     except NamespaceAlreadyExistsError:
         pass
     return cat.create_table_if_not_exists(IDENTIFIER, schema=SCHEMA)
+
+
+def append(cat: RestCatalog, table, data: pa.Table, retries: int = 5):
+    """Append one batch as one commit. If the commit is rejected because the
+    table changed (for example, AIStor compaction committed first), reload the
+    table and retry the same batch. Returns the refreshed table. Errors with an
+    unknown commit outcome are not retried, so a batch is never written twice."""
+    for attempt in range(retries + 1):
+        try:
+            table.append(data)
+            return table
+        except CommitFailedException:
+            if attempt == retries:
+                raise
+            time.sleep(0.5 * (attempt + 1))
+            table = cat.load_table(IDENTIFIER)
 
 
 def arrow_schema() -> pa.Schema:
